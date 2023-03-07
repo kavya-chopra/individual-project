@@ -263,6 +263,52 @@ namespace Sydx
         }
     }
 
+    public class HandshakeRequest : Request
+    {
+        public String host { get; set; }
+        public int pid { get; set; }
+        public int local_port { get; set; }
+        public override void process(Storage storage, Connections connections)
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+    }
+
+    public class SyncStorageRequest : Request
+    {
+        public String storage_snapshot { get; set; }
+        public override void process(Storage storage, Connections connections)
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+    }
+
+    public class PutRequest : Request
+    {
+        public String name { get; set; }
+        public Object value { get; set; }
+        public override void process(Storage storage, Connections connections)
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+    }
+
+    public class IncomingDataRequest : Request
+    {
+        public String function_name { get; set; }
+        public Object data { get; set; }
+        public override void process(Storage storage, Connections connections)
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+    }
+
+
+
     public static class ExcelFunctions
     {
         private static readonly Storage storage = new Storage();
