@@ -300,5 +300,18 @@ namespace Sydx
             else
                 return "!? Unheard Of ?!";
         }
+
+        [ExcelFunction(Description = "Applies Simplex algorithm to selected range.")]
+        public static string S_Simplex([ExcelArgument(Description = "All constraint function coefficients. G symbolizes greater than sign and L for lesser than sign")]object constraints, 
+                                        [ExcelArgument(Description = "Objective function coefficients")]object objective, 
+                                        [ExcelArgument(Description = "Enter max to find maximum of objective function and min to find minimum")]String funcType)
+        {
+            String[] constraints_str = convert_arr_to_string(constraints);
+            String objective_str = convert_arr_to_string(objective)[0];
+
+            Double answer = 0;
+
+            return answer.ToString();
+        }
     }
 }
