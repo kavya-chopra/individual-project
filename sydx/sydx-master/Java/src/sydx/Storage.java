@@ -17,22 +17,51 @@ public class Storage {
   }
 
   public boolean contains(Object name){
-    //TODO
+    log.log(Level.INFO, "Acquiring storage lock");
+    lock.lock();
+    boolean exists = dict.containsKey(name);
+    log.log(Level.INFO, "Releasing storage lock");
+    lock.unlock();
+    return exists;
   }
 
   public void put(Object name, Object value){
-    //TODO
+    log.log(Level.INFO, "Acquiring storage lock");
+    lock.lock();
+    dict.put(name, value);
+    log.log(Level.INFO, "Releasing storage lock");
+    lock.unlock();
   }
 
   public Object get(Object name){
-    //TODO
+    log.log(Level.INFO, "Acquiring storage lock");
+    lock.lock();
+    Object value = null;
+    if(dict.containsKey(name)){
+      value = dict.get(name);
+    }
+    log.log(Level.INFO, "Releasing storage lock");
+    lock.unlock();
+    return value;
   }
 
   public Map<Object, Object> getAll(){
-    //TODO
+    log.log(Level.INFO, "Acquiring storage lock");
+    lock.lock();
+    Map<Object, Object> dictCopy = new HashMap<>();
+    for (Map.Entry<Object, Object> entry : dict.entrySet()) {
+      dictCopy.put(entry.getKey(), entry.getValue());
+    }
+    log.log(Level.INFO, "Releasing storage lock");
+    lock.unlock();
+    return dictCopy;
   }
 
   public void putAll(Map<Object, Object> toAdd){
-    //TODO
+    log.log(Level.INFO, "Acquiring storage lock");
+    lock.lock();
+    dict.putAll(toAdd);
+    log.log(Level.INFO, "Releasing storage lock");
+    lock.unlock();
   }
 }
