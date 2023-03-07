@@ -270,8 +270,17 @@ namespace Sydx
         public int local_port { get; set; }
         public override void process(Storage storage, Connections connections)
         {
-            //TODO
-            throw new NotImplementedException();
+            string handle = Guid.NewGuid().ToString();
+
+            // TODO: create a Connection object and add it to Connections
+
+            // Build response
+            string response_type = "HANDSHAKE_RESPONSE";
+            string connection_handle = handle;
+            var response = new { response_type, connection_handle };
+            var json = JsonConvert.SerializeObject(response);
+
+            // TODO: return json to Python somehow
         }
     }
 
