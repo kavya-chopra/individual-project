@@ -1,0 +1,6 @@
+S:\dev\Sydx\Excel\bin\Debug\Excel.dll
+S:\dev\Sydx\Excel\bin\Debug\Excel.pdb
+S:\dev\Sydx\Excel\obj\Debug\Excel.csprojAssemblyReference.cache
+S:\dev\Sydx\Excel\obj\Debug\Excel.csproj.CoreCompileInputs.cache
+S:\dev\Sydx\Excel\obj\Debug\Excel.dll
+S:\dev\Sydx\Excel\obj\Debug\Excel.pdb
