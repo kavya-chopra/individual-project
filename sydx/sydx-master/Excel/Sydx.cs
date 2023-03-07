@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Bson;
 using ExcelDna.Integration;
+using ExcelDna.Integration.Extensibility;
 
 namespace Sydx
 {
@@ -221,6 +225,42 @@ namespace Sydx
             return value;
         }
 
+    }
+
+    public abstract class Request
+    {
+        public String request_type { get; set; }
+
+        protected Socket __handler { get; set; }
+        public abstract void process(Storage storage, Connections connections);
+
+        public static Request deserializeRequest(Socket handler, String content)
+        {
+            Request r = JsonConvert.DeserializeObject<Request>(content);
+            Request typed_request; 
+            
+            switch(r.request_type)
+            {
+                case "HANDSHAKE_REQUEST": 
+                    typed_request = JsonConvert.DeserializeObject<HandshakeRequest>(content);
+                    break;
+                case "SYNC_STORAGE_REQUEST":
+                    typed_request = JsonConvert.DeserializeObject<SyncStorageRequest>(content);
+                    break;
+                case "PUT_REQUEST":
+                    typed_request = JsonConvert.DeserializeObject<PutRequest>(content);
+                    break;
+                case "INCOMING_DATA_REQUEST":
+                    typed_request = JsonConvert.DeserializeObject<IncomingDataRequest>(content);
+                    break;
+                default:
+                    typed_request = r;
+                    break;
+            };
+
+            typed_request.__handler = handler;
+            return typed_request;
+        }
     }
 
     public static class ExcelFunctions
