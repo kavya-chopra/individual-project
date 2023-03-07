@@ -28,6 +28,8 @@ namespace Sydx
 
         private ManualResetEvent allDone = new ManualResetEvent(false);
 
+        private Connections connections = new Connections();
+
         public Server(int port, Storage storage)
         {
             this.port = port;
@@ -89,6 +91,7 @@ namespace Sydx
                 {
                     // All the data has been read from the client
                     this.storage.Put("message", content);
+                    Console.WriteLine(content);
 
                     Send(handler, "Thank you.");
                 }
@@ -123,10 +126,70 @@ namespace Sydx
             }
             catch (Exception e)
             {
+                Console.WriteLine("SendCallback failed" + e);
                 // TODO Log exception
             }
         }
     }
+
+
+    public class Connections
+    {
+        private Dictionary<string, Connection> connections = new Dictionary<string, Connection>();
+
+        public Connections() { }
+
+        public void Add(string handle, Connection connection)
+        {
+            Monitor.Enter(connections);
+            if (!connections.ContainsKey(handle))
+            {
+                connections.Add(handle, connection);
+            }
+            else
+            {
+                connections[handle] = connection;
+            }
+            Monitor.Exit(connections);
+        }
+
+        public void SendToAll(Request request)
+        {
+            Monitor.Enter(connections);
+            foreach(KeyValuePair<string, Connection> entry in connections)
+            {
+                Connection connection = entry.Value;
+                if(connection.Client is null)
+                {
+                    //TODO: _connect method
+                    //connection.Client = _connect(connection.Host, connection.LocalPort);
+                }
+                connection.Client.SendRequest(request);
+            }
+            Monitor.Exit(connections);
+        }
+
+    }
+
+
+    public class Connection
+    {
+        public Connection(object host, string pid, int localPort, DateTime dateTime, Client client)
+        {
+            this.Host = host;
+            this.Pid = pid;
+            this.LocalPort = localPort;
+            this.DateTime = dateTime;
+            this.Client = client;
+        }
+
+        public Object Host { get; }
+        public String Pid { get; }
+        public int LocalPort { get; }
+        public DateTime DateTime { get; }
+        public Client Client { get; set; }
+    }
+
 
     public class Storage
     {
