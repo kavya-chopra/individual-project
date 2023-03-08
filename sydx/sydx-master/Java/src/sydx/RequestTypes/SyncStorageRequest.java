@@ -4,12 +4,6 @@ import sydx.Connections;
 import sydx.Storage;
 
 import java.util.HashMap;
-package sydx.RequestTypes;
-
-import sydx.Connections;
-import sydx.Storage;
-
-import java.util.HashMap;
 import java.util.Map;
 
 public class SyncStorageRequest extends Request{

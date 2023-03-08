@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.util.Map;
 import sydx.Connections;
 import sydx.Storage;
+import sydx.SydxException;
 
 public class Request
 {
