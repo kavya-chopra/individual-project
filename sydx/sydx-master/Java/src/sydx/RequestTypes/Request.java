@@ -16,7 +16,7 @@ public class Request
     return null;
   }
 
-  public static Request deserializeRequest(Socket handler, String content) throws Exception {
+  public static Request deserializeRequest(Socket handler, String content) throws SydxException {
     //TODO: figure out how to deserialize from json/bson in Java
 
     //Request r = JsonConvert.DeserializeObject<Request>(content);
@@ -37,7 +37,7 @@ public class Request
         //typedRequest = JsonConvert.DeserializeObject<IncomingDataRequest>(content);
         break;
       default:
-        throw new Exception("Unexpected request type");
+        throw new SydxException("Unexpected request type");
         break;
     }
 

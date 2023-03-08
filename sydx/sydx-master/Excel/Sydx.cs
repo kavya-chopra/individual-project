@@ -176,6 +176,37 @@ namespace Sydx
     }
 
 
+    public class Client
+    {
+        public Client(Object host, int port, int localPort, Storage storage)
+        {
+            this.Host = host;
+            this.Port = port;
+            this.LocalPort = localPort;
+            this.Storage = storage;
+            this.Handle = null;
+        }
+
+        public Object Host { get; }
+        public int Port { get; }
+        public int LocalPort { get; }
+        public Storage Storage { get; }
+        public Object Handle { get; set; }
+
+        public void SendRequest(Request request)
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+
+        public void Connect()
+        {
+            //TODO
+            throw new NotImplementedException();
+        }
+    }
+
+
     public class Connection
     {
         public Connection(object host, string pid, int localPort, DateTime dateTime, Client client)
