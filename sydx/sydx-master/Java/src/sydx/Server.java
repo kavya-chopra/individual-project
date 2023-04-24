@@ -7,6 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 
 import sydx.RequestTypes.Request;
@@ -18,15 +19,19 @@ public class Server {
   private sydx.RequestTypes.Request request;
   private ServerSocket serverSocket;
   private boolean mainThreadIsRunning;
+  private Storage storage;
+  private Connections connections;
 
-  public Server(String host, int port, sydx.RequestTypes.Request request) {
+  public Server(String host, int port, Request request, Storage storage, Connections connections) {
     this.host = host;
     this.port = port;
     this.request = request;
+    this.storage = storage;
+    this.connections = connections;
     this.mainThreadIsRunning = true;
   }
 
-  public void listen() throws IOException {
+  public void listen() throws IOException, SydxException {
     this.serverSocket = new ServerSocket(port);
     System.out.println("Java server listening on port: "+port);
     while (mainThreadIsRunning){
@@ -41,7 +46,7 @@ public class Server {
     this.mainThreadIsRunning = false;
   }
 
-  private synchronized void listenToClient(Socket clientSocket) throws IOException {
+  private synchronized void listenToClient(Socket clientSocket) throws IOException, SydxException {
     // Receive the serialized BSON data
     DataInputStream inputStream = new DataInputStream(clientSocket.getInputStream());
     DataOutputStream outputStream = new DataOutputStream(clientSocket.getOutputStream());
@@ -52,14 +57,13 @@ public class Server {
 
     Document receivedDoc = Document.parse(inputStream.readUTF());
     // Get response to the request by processing the request
-    Request request = new Request(receivedDoc, outputStream);
-    Document response = request.getResponse();
+    Request request = new Request(receivedDoc);
+    Document response = request.getResponse(storage, connections);
 
     // Write the response back to the client
     byte[] responseBytes = response.toJson().getBytes();
     outputStream.writeInt(responseBytes.length);
-    outputStream.write(response.toJson().getBytes());
-    clientSocket.close();
+    outputStream.write(responseBytes);
   }
 
 

@@ -6,7 +6,7 @@ public class Sydx {
   private static Storage storage = new Storage();
   private static Connections connections = new Connections();
 
-  public static Client _connect(Object host, int localPort){
+  public static Client _connect(String host, int localPort){
     Client client = new Client(host, localPort, server_port, storage);
     client.connect();
     return client;
@@ -16,7 +16,7 @@ public class Sydx {
     //TODO
   }
 
-  public static Object connect(Object host, int port) throws SydxException {
+  public static String connect(String host, int port) throws SydxException {
     if(server_port == null){
       throw new SydxException("Must open port before connecting");
     }

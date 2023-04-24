@@ -1,16 +1,27 @@
 package sydx;
 
-import sydx.RequestTypes.Request;
+import org.bson.Document;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Client {
 
-  private Object host;
+  private String host;
   private int port;
   private Integer localPort;
   private Storage storage;
-  private Object handle;
+  private Socket socket;
+  private String handle;
 
-  public Client(Object host, int port, Integer localPort, Storage storage){
+  public Client(String host, int port, Integer localPort, Storage storage){
     this.host = host;
     this.port = port;
     this.localPort = localPort;
@@ -18,15 +29,59 @@ public class Client {
     this.handle = null;
   }
 
-  public void sendRequest(Request request){
-    //TODO
+  public Document sendRequest(Document request) {
+
+    Document receivedDoc = new Document();
+
+    try {
+      this.socket = new Socket(host, port);
+      System.out.println("Java Client connected to server");
+
+      DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
+      outputStream.writeInt(request.toJson().getBytes().length);
+      outputStream.write(request.toJson().getBytes(StandardCharsets.UTF_8));
+      System.out.println("Sent request: " + request.toJson());
+
+      DataInputStream inputStream = new DataInputStream(socket.getInputStream());
+      int bsonDataLength = inputStream.readInt();
+      byte[] bsonData = new byte[bsonDataLength];
+      inputStream.readFully(bsonData);
+
+      receivedDoc = Document.parse(inputStream.readUTF());
+      System.out.println("Received response: " + receivedDoc.toJson());
+      this.socket.close();
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return receivedDoc;
   }
 
   public void connect(){
-    //TODO
+    try {
+      Document requestHandshake = new Document("request_type", "HANDSHAKE_REQUEST")
+                          .append("host", InetAddress.getLocalHost().getHostName())
+                          .append("pid", ProcessHandle.current().pid())
+                          .append("local_port", this.localPort);
+      Document responseHandshake = sendRequest(requestHandshake);
+      this.handle = responseHandshake.getString("connection_handle");
+
+      Map<String, Object> values = this.storage.getAll();
+
+      Document requestSyncStorage = new Document("request_type", "SYNC_STORAGE_REQUEST")
+                          .append("storage_snapshot", values);
+      Document responseSyncStorage = sendRequest(requestSyncStorage);
+
+      Map<String, Object> theirStorageSnapshot = requestSyncStorage.get("storage_snapshot", new HashMap<String, Object>());
+      storage.putAll(theirStorageSnapshot);
+
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+    }
   }
 
-  public Object getHandle(){
+  public String getHandle(){
     return this.handle;
   }
 }
