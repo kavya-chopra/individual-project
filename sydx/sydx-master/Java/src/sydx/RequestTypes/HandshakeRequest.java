@@ -19,7 +19,6 @@ public class HandshakeRequest extends Request {
     this.host = host;
     this.pid = pid;
     this.local_port = local_port;
-    //this.response = new HashMap<>();
   }
 
   public String getHost(){

@@ -15,7 +15,7 @@ public class Connection{
     this.client = client;
   }
 
-  public Object getHost(){
+  public String getHost(){
     return this.host;
   }
 

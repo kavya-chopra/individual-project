@@ -1,7 +1,9 @@
 package sydx;
 
+import org.bson.Document;
 import sydx.RequestTypes.Request;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,7 +20,7 @@ public class Connections {
     connections.put(handle, connection);
   }
 
-  public synchronized void sendToAll(Request request){
+  public synchronized void sendToAll(Document request) throws IOException {
     for (Map.Entry<Object, Connection> connectionEntry : connections.entrySet()) {
       Connection connection = connectionEntry.getValue();
       if (connection.getClient() == null){

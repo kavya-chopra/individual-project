@@ -1,13 +1,12 @@
 package sydx;
 
 public class SydxException extends Exception {
-  String error;
 
-  SydxException(){
+  public SydxException(){
     super();
   }
 
-  SydxException(String error) {
-    super(error);
+  public SydxException(String error) {
+    System.out.println(error);
   }
 }

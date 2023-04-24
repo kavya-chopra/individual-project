@@ -8,7 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Storage {
-  private Map<Object, Object> dict;
+  private Map<String, Object> dict;
   Lock lock;
   Logger log = Logger.getLogger(Storage.class.getName());
 
@@ -17,7 +17,7 @@ public class Storage {
     lock = new ReentrantLock();
   }
 
-  public boolean contains(Object name){
+  public boolean contains(String name){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
     boolean exists = dict.containsKey(name);
@@ -26,7 +26,7 @@ public class Storage {
     return exists;
   }
 
-  public void put(Object name, Object value){
+  public void put(String name, Object value){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
     dict.put(name, value);
@@ -34,7 +34,7 @@ public class Storage {
     lock.unlock();
   }
 
-  public Object get(Object name){
+  public Object get(String name){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
     Object value = null;
@@ -46,11 +46,11 @@ public class Storage {
     return value;
   }
 
-  public Map<Object, Object> getAll(){
+  public Map<String, Object> getAll(){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
-    Map<Object, Object> dictCopy = new HashMap<>();
-    for (Map.Entry<Object, Object> entry : dict.entrySet()) {
+    Map<String, Object> dictCopy = new HashMap<>();
+    for (Map.Entry<String, Object> entry : dict.entrySet()) {
       dictCopy.put(entry.getKey(), entry.getValue());
     }
     log.log(Level.INFO, "Releasing storage lock");
@@ -58,7 +58,7 @@ public class Storage {
     return dictCopy;
   }
 
-  public void putAll(Map<Object, Object> toAdd){
+  public void putAll(Map<String, Object> toAdd){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
     dict.putAll(toAdd);
