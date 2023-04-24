@@ -1,93 +1,59 @@
 package sydx.RequestTypes;
 
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.Socket;
+import java.util.HashMap;
 
-import org.bson.BsonDocument;
 import sydx.Connections;
 import sydx.Storage;
 import sydx.SydxException;
 import org.bson.Document;
 
 
-public class Interpreter
+public class Request
 {
-  public String request_type;
-  public static Document response;
-  //public Map<String, Object> response;
-  protected Socket _handler;
+  public static Document responseDoc;
+  protected static Document receivedDoc;
 
-  public Interpreter(){
-    this.data = data;
+  public Request(Document receivedDoc){
+    this.receivedDoc = receivedDoc;
+    this.responseDoc = new Document();
   }
+
+  protected Request(){}
 
   public Document processRequest(Storage storage, Connections connections)
   {
     return null;
   }
 
-  public static byte[] deserializeRequest(Socket handler, String content, Storage storage, Connections connections) throws SydxException, IOException {
-    //TODO: convert byte array bsonBytes to Document or figure out BsonDocument
-    //TODO: convert Document response to byte array (bson) or figure out BsonDocument
-    //TODO: fix PUT_REQUEST so that it can accept any value type not just string
-    //TODO: figure out SYNC_STORAGE_REQUEST to find out the datatype of the values
+  public static Document getResponse(Storage storage, Connections connections) throws SydxException, IOException {
+    Request typedRequest;
 
-    //Request r = JsonConvert.DeserializeObject<Request>(content);
-    Interpreter r;
-    Interpreter typedRequest;
-    byte[] byteResponse;
-
-    response = new Document();
-
-    DataInputStream inputStream = new DataInputStream(handler.getInputStream());
-    byte[] bsonBytes = new byte[1024];
-    inputStream.readFully(bsonBytes);
-
-    //Document bsonDoc = Document.parse(bsonBytes);
-
-    switch(bsonDoc.getString("request_type"))
+    switch(receivedDoc.getString("request_type"))
     {
       case "HANDSHAKE_REQUEST":
-        typedRequest = new HandshakeInterpreter(bsonDoc.getString("host"),
-                                            bsonDoc.getString("pid"),
-                                            bsonDoc.getInteger("local_port"));
+        typedRequest = new HandshakeRequest(receivedDoc.getString("host"),
+                                            receivedDoc.getString("pid"),
+                                            receivedDoc.getInteger("local_port"));
+        break;
 
-        break;
       case "SYNC_STORAGE_REQUEST":
-        //typedRequest = new SyncStorageRequest<>();
+        typedRequest = new SyncStorageRequest(receivedDoc.get("storage", new HashMap<String, Object>()));
         break;
+
       case "PUT_REQUEST":
-        typedRequest = new PutInterpreter(bsonDoc.getString("name"), bsonDoc.get("value"));
+        typedRequest = new PutRequest(receivedDoc.getString("name"), receivedDoc.get("value"));
         break;
+
       case "INCOMING_DATA_REQUEST":
-        typedRequest = new IncomingDataInterpreter(bsonDoc.getString("function_name"), bsonDoc.get("data"));
+        typedRequest = new IncomingDataRequest(receivedDoc.getString("function_name"), receivedDoc.get("data"));
         break;
+
       default:
         throw new SydxException("Unexpected request type");
-        break;
     }
 
-    typedRequest._handler = handler;
-    response = typedRequest.processRequest(storage, connections);
-    byteResponse = response.toBson();
-    return byteResponse;
-  }
-
-  public Socket getHandler() {
-    return _handler;
-  }
-
-  public String getRequest_type() {
-    return request_type;
-  }
-
-  public void setHandler(Socket _handler) {
-    this._handler = _handler;
-  }
-
-  public void setRequest_type(String request_type) {
-    this.request_type = request_type;
+    responseDoc = typedRequest.processRequest(storage, connections);
+    return responseDoc;
   }
 }

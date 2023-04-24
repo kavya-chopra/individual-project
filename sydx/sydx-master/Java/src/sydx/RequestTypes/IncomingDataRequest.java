@@ -4,12 +4,12 @@ import org.bson.Document;
 import sydx.Connections;
 import sydx.Storage;
 
-public class IncomingDataInterpreter extends Interpreter {
+public class IncomingDataRequest extends Request {
 
   private String functionName;
   private Object data;
 
-  public IncomingDataInterpreter(String functionName, Object data){
+  public IncomingDataRequest(String functionName, Object data){
     this.functionName = functionName;
     this.data = data;
     //this.response = new HashMap<>();
@@ -32,6 +32,6 @@ public class IncomingDataInterpreter extends Interpreter {
       default: System.out.println("Function not recognized by Java component.");
     }
 
-    return response;
+    return responseDoc;
   }
 }

@@ -9,13 +9,13 @@ import sydx.Connection;
 import sydx.Storage;
 import sydx.Connections;
 
-public class HandshakeInterpreter extends Interpreter {
+public class HandshakeRequest extends Request {
 
   private final String host;
   private final String pid;
   private final int local_port;
 
-  public HandshakeInterpreter(String host, String pid, int local_port) {
+  public HandshakeRequest(String host, String pid, int local_port) {
     this.host = host;
     this.pid = pid;
     this.local_port = local_port;
@@ -42,8 +42,8 @@ public class HandshakeInterpreter extends Interpreter {
 
     connections.add(handle, new Connection(host, pid, local_port, formatter.format(timeNow), null));
 
-    response.append("response_type", "HANDSHAKE_RESPONSE");
-    response.append("connection_handle", handle);
-    return response;
+    responseDoc.append("response_type", "HANDSHAKE_RESPONSE");
+    responseDoc.append("connection_handle", handle);
+    return responseDoc;
   }
 }

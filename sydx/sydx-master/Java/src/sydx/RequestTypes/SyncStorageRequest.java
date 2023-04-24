@@ -6,25 +6,20 @@ import sydx.Storage;
 
 import java.util.Map;
 
-public class SyncStorageInterpreter<T> extends Interpreter {
+public class SyncStorageRequest extends Request {
 
-  private Map<String, T> storageSnapshot;
+  private Map<String, Object> storageSnapshot;
 
-  public SyncStorageInterpreter(Map<String, T> storageSnapshot){
+  public SyncStorageRequest(Map<String, Object> storageSnapshot){
     this.storageSnapshot = storageSnapshot;
-    //this.response = new HashMap<>();
-  }
-
-  public Map<String, T> getStorageSnapshot(){
-    return storageSnapshot;
   }
 
   @Override
   public Document processRequest(Storage storage, Connections connections){
-    storage.putAll((Map<String, Object>) storageSnapshot);
+    storage.putAll(storageSnapshot);
 
-    response.append("response_type", "SYNC_STORAGE_RESPONSE");
-    response.append("our_storage_snapshot", storage.getAll());
-    return response;
+    responseDoc.append("response_type", "SYNC_STORAGE_RESPONSE");
+    responseDoc.append("our_storage_snapshot", storage.getAll());
+    return responseDoc;
   }
 }
