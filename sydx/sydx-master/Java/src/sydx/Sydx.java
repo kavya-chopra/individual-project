@@ -10,7 +10,7 @@ public class Sydx {
   private static Storage storage = new Storage();
   private static Connections connections = new Connections();
 
-  public static Client _connect(String host, int localPort){
+  static Client _connect(String host, int localPort){
     Client client = new Client(host, localPort, serverPort, storage);
     client.connect();
     return client;
@@ -39,7 +39,7 @@ public class Sydx {
     return serverPort;
   }
 
-  public void put(String name, Object value){
+  public static void put(String name, Object value){
 
     String type = getTypeMarker(value);
 
@@ -67,6 +67,8 @@ public class Sydx {
         break;
       case "Float" : type = "float";
         break;
+      case "String" : type = "string";
+      break;
       case "Hashmap" : // merged with case "Dictionary"
       case "Dictionary" : type = "dict";
         break;
@@ -79,7 +81,7 @@ public class Sydx {
     return type;
   }
 
-  public Object get(String name){
+  public static Object get(String name){
     Document valueAndType = Document.parse(storage.get(name));
     return valueAndType.get("value");
   }

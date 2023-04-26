@@ -147,15 +147,25 @@ class Interpreter(object):
                 'response_type': 'PUT_RESPONSE',
                 'result': 'SUCCESS'
             }
+        elif request_obj['request_type'] == 'INCOMING_DATA_REQUEST':
+            func = request_obj['function_name']
+            data = request_obj['data']
+            if func == 'simplex':
+
+                answer = ...
+                response_obj = {
+                    'response_type': 'INCOMING_DATA_RESPONSE',
+                    'result': answer
+                }
         else: raise SydxException('Unfamiliar request_type')
         response_json = json.dumps(response_obj)
         return response_json
 
 class Server(object):
-    def __init__(self, host, port, interpreter):
+    def __init__(self, host, port, request):
         self.__host = host
         self.__port = port
-        self.__interpreter = interpreter
+        self.__interpreter = request
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__socket.bind((self.__host, self.__port))
@@ -291,8 +301,8 @@ def port(port):
     if __server_port is not None:
         raise SydxException('Port already open')
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    interpreter = Interpreter(__storage, __connections)
-    server = Server('', port, interpreter)
+    request = Interpreter(__storage, __connections)
+    server = Server('', port, request)
     threading.Thread(target=server.listen, args=()).start()
     __server_port = port
 

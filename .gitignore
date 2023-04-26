@@ -1,0 +1,10 @@
+# Default ignored files
+.idea/
+.vs/
+out/
+target/
+/shelf/
+sydx/shelf
+sydx/sydx-master/Python/src/main/__pycache__
+sydx/sydx-master/.vs/
+sydx/sydx-master/env/

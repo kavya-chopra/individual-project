@@ -1,0 +1,57 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\Excel.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\Excel.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\Excel.csproj",
+        "projectName": "Excel",
+        "projectPath": "C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\Excel.csproj",
+        "packagesPath": "C:\\Users\\kavya\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\obj\\",
+        "projectStyle": "PackageReference",
+        "fallbackFolders": [
+          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages",
+          "C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\https:\\api.nuget.org\\v3\\index.json"
+        ],
+        "configFilePaths": [
+          "C:\\Users\\kavya\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
+          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        ],
+        "originalTargetFrameworks": [
+          "net472"
+        ],
+        "sources": {
+          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages": {},
+          "C:\\Users\\kavya\\Downloads\\individual-project\\index.json": {}
+        },
+        "frameworks": {
+          "net472": {
+            "targetAlias": "net472",
+            "projectReferences": {}
+          }
+        }
+      },
+      "frameworks": {
+        "net472": {
+          "targetAlias": "net472",
+          "dependencies": {
+            "MongoDB.Bson": {
+              "target": "Package",
+              "version": "[2.19.1, )"
+            }
+          }
+        }
+      },
+      "runtimes": {
+        "win": {
+          "#import": []
+        }
+      }
+    }
+  }
+}

@@ -67,6 +67,7 @@ namespace Sydx
             Socket handler = socket.EndAccept(ar);
 
             this.storage.Put("connected", 357.0);
+            Console.WriteLine("Server accepted client");
 
             StateObject state = new StateObject();
             state.workSocket = handler;
@@ -90,6 +91,7 @@ namespace Sydx
 
                 // Check for end-of-file tag. If it is not there, read more data
                 content = state.sb.ToString();
+                Console.WriteLine(content);
 
                 if (content.IndexOf("<EOF>") > -1)
                 {
@@ -130,7 +132,7 @@ namespace Sydx
             }
             catch (Exception e)
             {
-                Console.WriteLine("SendCallback failed" + e);
+                Console.WriteLine("SendCallback failed " + e);
                 // TODO Log exception
             }
         }
@@ -432,8 +434,8 @@ namespace Sydx
                                         [ExcelArgument(Description = "Objective function coefficients")]object objective, 
                                         [ExcelArgument(Description = "Enter max to find maximum of objective function and min to find minimum")]String funcType)
         {
-            String[] constraints_str = convert_arr_to_string(constraints);
-            String objective_str = convert_arr_to_string(objective)[0];
+            // String[] constraints_str = convert_arr_to_string(constraints);
+            // String objective_str = convert_arr_to_string(objective)[0];
 
             Double answer = 0;
 

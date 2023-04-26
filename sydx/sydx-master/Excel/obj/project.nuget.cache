@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "dgSpecHash": "ioxG1fORSHHuet4aH6M08UcJ26cmSCQsEimdy5dVnl0tEUhoLb6W1c8ERfZEQLugorkTUjYSDc4RmjVVequ/QQ==",
+  "success": false,
+  "projectFilePath": "C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\Excel.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\kavya\\.nuget\\packages\\mongodb.bson\\2.19.1\\mongodb.bson.2.19.1.nupkg.sha512",
+    "C:\\Users\\kavya\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\5.0.0\\system.runtime.compilerservices.unsafe.5.0.0.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "The local source 'C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\https:\\api.nuget.org\\v3\\index.json' doesn't exist.",
+      "libraryId": "MongoDB.Bson"
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "The local source 'C:\\Users\\kavya\\Downloads\\individual-project\\sydx\\sydx-master\\Excel\\https:\\api.nuget.org\\v3\\index.json' doesn't exist.",
+      "libraryId": "System.Runtime.CompilerServices.Unsafe"
+    }
+  ]
+}

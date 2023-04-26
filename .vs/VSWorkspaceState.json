@@ -3,9 +3,11 @@
     "",
     "\\sydx",
     "\\sydx\\sydx-master",
+    "\\sydx\\sydx-master\\Excel",
     "\\sydx\\sydx-master\\Python",
+    "\\sydx\\sydx-master\\Python\\src",
     "\\sydx\\sydx-master\\Python\\src\\main"
   ],
-  "SelectedNode": "\\sydx\\sydx-master\\Python",
+  "SelectedNode": "\\sydx\\sydx-master\\Excel\\Excel.csproj",
   "PreviewInSolutionExplorer": false
 }
