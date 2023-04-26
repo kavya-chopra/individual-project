@@ -28,6 +28,17 @@ public class Sydx {
     t.start();
   }
 
+  public static String connect(String host, int port) throws SydxException {
+    if(serverPort == null){
+      throw new SydxException("Must open port before connecting");
+    }
+    return _connect(host, port).getHandle();
+  }
+
+  public static Integer getServerPort(){
+    return serverPort;
+  }
+
   
 
   public void show(){

@@ -1,5 +1,7 @@
 package sydx;
 
+import org.bson.BSONObject;
+import org.bson.BasicBSONDecoder;
 import org.bson.Document;
 
 import java.io.DataInputStream;
@@ -47,7 +49,10 @@ public class Client {
       byte[] bsonData = new byte[bsonDataLength];
       inputStream.readFully(bsonData);
 
-      receivedDoc = Document.parse(inputStream.readUTF());
+      BasicBSONDecoder decoder = new BasicBSONDecoder();
+      BSONObject bsonObject = decoder.readObject(bsonData);
+
+      receivedDoc = new Document(bsonObject.toMap());
       System.out.println("Received response: " + receivedDoc.toJson());
       this.socket.close();
 
@@ -67,13 +72,13 @@ public class Client {
       Document responseHandshake = sendRequest(requestHandshake);
       this.handle = responseHandshake.getString("connection_handle");
 
-      Map<String, Object> values = this.storage.getAll();
+      Map<String, String> values = this.storage.getAll();
 
       Document requestSyncStorage = new Document("request_type", "SYNC_STORAGE_REQUEST")
                           .append("storage_snapshot", values);
       Document responseSyncStorage = sendRequest(requestSyncStorage);
 
-      Map<String, Object> theirStorageSnapshot = requestSyncStorage.get("storage_snapshot", new HashMap<String, Object>());
+      Map<String, String> theirStorageSnapshot = responseSyncStorage.get("storage_snapshot", new HashMap<String, String>());
       storage.putAll(theirStorageSnapshot);
 
     } catch (UnknownHostException e) {

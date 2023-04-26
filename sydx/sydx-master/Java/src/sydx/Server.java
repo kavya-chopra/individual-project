@@ -1,39 +1,38 @@
 package sydx;
 
+import org.bson.BSONObject;
+import org.bson.BasicBSONDecoder;
 import org.bson.Document;
+import sydx.RequestTypes.Request;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.nio.charset.StandardCharsets;
 
-import sydx.RequestTypes.Request;
-
-public class Server {
+public class Server implements Runnable{
 
   private String host;
   private int port;
-  private sydx.RequestTypes.Request request;
   private ServerSocket serverSocket;
   private boolean mainThreadIsRunning;
   private Storage storage;
   private Connections connections;
 
-  public Server(String host, int port, Request request, Storage storage, Connections connections) {
+  public Server(String host, int port, Storage storage, Connections connections) {
     this.host = host;
     this.port = port;
-    this.request = request;
     this.storage = storage;
     this.connections = connections;
     this.mainThreadIsRunning = true;
   }
 
+
+
   public void listen() throws IOException, SydxException {
     this.serverSocket = new ServerSocket(port);
-    System.out.println("Java server listening on port: "+port);
+    System.out.println("Java server listening on port: " + port);
     while (mainThreadIsRunning){
       Socket clientSocket = serverSocket.accept();
       System.out.println("Accepted client: " + clientSocket.getInetAddress());
@@ -55,8 +54,12 @@ public class Server {
     byte[] bsonData = new byte[bsonDataLength];
     inputStream.readFully(bsonData);
 
-    Document receivedDoc = Document.parse(inputStream.readUTF());
+    BasicBSONDecoder decoder = new BasicBSONDecoder();
+    BSONObject bsonObject = decoder.readObject(bsonData);
+
+    //Document receivedDoc = Document.parse(inputStream.readUTF());
     // Get response to the request by processing the request
+    Document receivedDoc = new Document(bsonObject.toMap());
     Request request = new Request(receivedDoc);
     Document response = request.getResponse(storage, connections);
 
@@ -67,4 +70,14 @@ public class Server {
   }
 
 
+  @Override
+  public void run() {
+    try {
+      this.listen();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (SydxException e) {
+      e.printStackTrace();
+    }
+  }
 }
