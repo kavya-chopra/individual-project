@@ -6,12 +6,11 @@ import sydx.Storage;
 
 public class PutRequest extends Request {
   private String name;
-  private Object value;
+  private String value;
 
-  public PutRequest(String name, Object value){
+  public PutRequest(String name, String value){
     this.name = name;
     this.value = value;
-    //this.response = new HashMap<>();
   }
 
   @Override

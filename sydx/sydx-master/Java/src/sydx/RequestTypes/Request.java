@@ -5,6 +5,7 @@ import java.util.HashMap;
 
 import sydx.Connections;
 import sydx.Storage;
+import sydx.Sydx;
 import sydx.SydxException;
 import org.bson.Document;
 
@@ -33,20 +34,25 @@ public class Request
     {
       case "HANDSHAKE_REQUEST":
         typedRequest = new HandshakeRequest(receivedDoc.getString("host"),
-                                            receivedDoc.getString("pid"),
+                                            receivedDoc.getLong("pid"),
                                             receivedDoc.getInteger("local_port"));
         break;
 
       case "SYNC_STORAGE_REQUEST":
-        typedRequest = new SyncStorageRequest(receivedDoc.get("storage", new HashMap<String, Object>()));
+        typedRequest = new SyncStorageRequest(receivedDoc.get("storage", new HashMap<String, String>()));
         break;
 
       case "PUT_REQUEST":
-        typedRequest = new PutRequest(receivedDoc.getString("name"), receivedDoc.get("value"));
+        Object value = receivedDoc.get("value");
+        String valueAndType = new Document("value_type", Sydx.getTypeMarker(value))
+                              .append("value", value)
+                              .toJson();
+        typedRequest = new PutRequest(receivedDoc.getString("name"), valueAndType);
         break;
 
       case "INCOMING_DATA_REQUEST":
-        typedRequest = new IncomingDataRequest(receivedDoc.getString("function_name"), receivedDoc.get("data"));
+        typedRequest = new IncomingDataRequest(receivedDoc.getString("function_name"),
+                                               receivedDoc.get("data", new HashMap<String, Object>()));
         break;
 
       default:

@@ -8,9 +8,9 @@ import java.util.Map;
 
 public class SyncStorageRequest extends Request {
 
-  private Map<String, Object> storageSnapshot;
+  private Map<String, String> storageSnapshot;
 
-  public SyncStorageRequest(Map<String, Object> storageSnapshot){
+  public SyncStorageRequest(Map<String, String> storageSnapshot){
     this.storageSnapshot = storageSnapshot;
   }
 
