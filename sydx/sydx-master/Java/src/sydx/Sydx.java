@@ -1,47 +1,34 @@
 package sydx;
 
+import org.bson.Document;
+
+import java.io.IOException;
+
 public class Sydx {
 
-  private static Integer server_port;
+  private static Integer serverPort;
   private static Storage storage = new Storage();
   private static Connections connections = new Connections();
 
   public static Client _connect(String host, int localPort){
-    Client client = new Client(host, localPort, server_port, storage);
+    Client client = new Client(host, localPort, serverPort, storage);
     client.connect();
     return client;
   }
 
-  public static void setServerPort(){
-    //TODO
-  }
-
-  public static String connect(String host, int port) throws SydxException {
-    if(server_port == null){
-      throw new SydxException("Must open port before connecting");
+  public static void port(Integer port){
+    if (serverPort != null){
+      new SydxException("Port already open");
+      System.out.println("Port already open for java component");
     }
-    return _connect(host, port).getHandle();
+    serverPort = port;
+    Server server = new Server("", port, storage, connections);
+
+    Thread t = new Thread(server);
+    t.start();
   }
 
-  public static Integer getServerPort(){
-    return server_port;
-  }
-
-  public void serialise(){
-    //TODO
-  }
-
-  public void deserialize(){
-    //TODO
-  }
-
-  public void put(){
-    //TODO
-  }
-
-  public void get(){
-    //TODO
-  }
+  
 
   public void show(){
     //TODO
