@@ -12,6 +12,8 @@ import string
 import threading
 import uuid
 
+from bson import BSON
+
 class SydxException(Exception):
     pass
 
@@ -120,7 +122,8 @@ class Interpreter(object):
         self.__connections = connections
 
     def interpret(self, request_json):
-        request_obj = json.loads(request_json)
+        request_obj = request_json
+        # request_obj = json.loads(request_json)
         if request_obj['request_type'] == 'HANDSHAKE_REQUEST':
             handle = str(uuid.uuid1())
             host = request_obj['host']
@@ -148,14 +151,15 @@ class Interpreter(object):
                 'result': 'SUCCESS'
             }
         else: raise SydxException('Unfamiliar request_type')
-        response_json = json.dumps(response_obj)
-        return response_json
+        # response_json = json.dumps(response_obj)
+        # return response_json
+        return response_obj
 
 class Server(object):
-    def __init__(self, host, port, interpreter):
+    def __init__(self, host, port, request):
         self.__host = host
         self.__port = port
-        self.__interpreter = interpreter
+        self.__interpreter = request
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__socket.bind((self.__host, self.__port))
@@ -182,11 +186,19 @@ class Server(object):
         return message
             
     def listenToClient(self, client, address):
-        request = self.receive_line(client)
-        request = request.rstrip()
+        request_length = int.from_bytes(client.recv(4), byteorder='big')
+        print("data length: ", request_length)
+        request = BSON.decode(client.recv(request_length))
+        print ("Received request: ", request)
+        # request = self.receive_line(client)
+        # request = request.rstrip()
         response = self.__interpreter.interpret(request)
-        response = response.rstrip() + '\n'
-        client.send(response.encode())
+        # response = response.rstrip() + '\n'
+        print ("Sending response: ", response)
+        bson_data = BSON.encode(response)
+        client.sendall(len(bson_data).to_bytes(4, 'big'))
+        client.sendall(bson_data)
+        # client.send(response.encode())
 
 class Client(object):
     def __init__(self, host, port, local_port, storage):
@@ -211,19 +223,26 @@ class Client(object):
         return message
 
     def send_request(self, request):
-        request_json = json.dumps(request)
+        #request_json = json.dumps(request)
         logger = logging.getLogger()
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         logger.debug('Connecting on socket %s' % str(self.__socket))
         self.__socket.connect((self.__host, self.__port))
-        logger.debug('Sending request: %s' % request_json)
-        self.__socket.send((request_json + '\n').encode())
+        logger.debug('Sending request: %s' % request)
+        #logger.debug('Sending request: %s' % request_json)
+        bson_data = BSON.encode(request)
+        self.__socket.sendall(len(bson_data).to_bytes(4, 'big'))
+        self.__socket.sendall(bson_data)
+        # self.__socket.send((request_json + '\n').encode())
         logger.debug('Receiving response')
-        response_json = self.receive_line(self.__socket)
+        response_length = int.from_bytes(self.__socket.recv(4), byteorder='big')
+        logger.debug('data length: %s' % response_length)
+        response_json = BSON.decode(self.__socket.recv(response_length))
+        # response_json = self.receive_line(self.__socket)
         logger.debug('Received response: %s' % response_json)
-        response = json.loads(response_json)
+        # response = json.loads(response_json)
         self.__socket.close()
-        return response
+        return response_json
 
     def connect(self):
         request = {
@@ -291,8 +310,8 @@ def port(port):
     if __server_port is not None:
         raise SydxException('Port already open')
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    interpreter = Interpreter(__storage, __connections)
-    server = Server('', port, interpreter)
+    request = Interpreter(__storage, __connections)
+    server = Server('', port, request)
     threading.Thread(target=server.listen, args=()).start()
     __server_port = port
 

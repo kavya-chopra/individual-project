@@ -24,47 +24,41 @@ Disclosure -- pivot() function, subcomponent of maxz() and minz(), has a couple 
 import numpy as np
 
 # generates an empty matrix with adequate size for variables and constraints.
-def gen_matrix(var,cons):
+def gen_matrix(var, cons):
     tab = np.zeros((cons+1, var+cons+2))
     return tab
 
 # checks the furthest right column for negative values ABOVE the last row. If negative values exist, another pivot is required.
 def next_round_r(table):
-    m = min(table[:-1,-1])
-    if m>= 0:
-        return False
-    else:
-        return True
+    m = min(table[:-1, -1])
+    return m < 0
 
 # checks that the bottom row, excluding the final column, for negative values. If negative values exist, another pivot is required.
 def next_round(table):
-    lr = len(table[:,0])
-    m = min(table[lr-1,:-1])
-    if m>=0:
-        return False
-    else:
-        return True
+    lr = len(table[:, 0])
+    m = min(table[lr-1, :-1])
+    return m < 0
 
 # Similar to next_round_r function, but returns row index of negative element in furthest right column
 def find_neg_r(table):
     # lc = number of columns, lr = number of rows
-    lc = len(table[0,:])
+    lc = len(table[0, :])
     # search every row (excluding last row) in final column for min value
-    m = min(table[:-1,lc-1])
-    if m<=0:
+    m = min(table[:-1, lc-1])
+    if m <= 0:
         # n = row index of m location
-        n = np.where(table[:-1,lc-1] == m)[0][0]
+        n = np.where(table[:-1, lc-1] == m)[0][0]
     else:
         n = None
     return n
 
 #returns column index of negative element in bottom row
 def find_neg(table):
-    lr = len(table[:,0])
-    m = min(table[lr-1,:-1])
-    if m<=0:
+    lr = len(table[:, 0])
+    m = min(table[lr-1, :-1])
+    if m <= 0:
         # n = row index for m
-        n = np.where(table[lr-1,:-1] == m)[0][0]
+        n = np.where(table[lr-1, :-1] == m)[0][0]
     else:
         n = None
     return n
@@ -75,17 +69,17 @@ def loc_piv_r(table):
         # r = row index of negative entry
         r = find_neg_r(table)
         # finds all elements in row, r, excluding final column
-        row = table[r,:-1]
+        row = table[r, :-1]
         # finds minimum value in row (excluding the last column)
         m = min(row)
         # c = column index for minimum entry in row
         c = np.where(row == m)[0][0]
         # all elements in column
-        col = table[:-1,c]
+        col = table[:-1, c]
         # need to go through this column to find smallest positive ratio
-        for i, b in zip(col,table[:-1,-1]):
+        for i, b in zip(col,table[:-1, -1]):
             # i cannot equal 0 and b/i must be positive.
-            if i**2>0 and b/i>0:
+            if i**2 > 0 and b/i > 0:
                 total.append(b/i)
             else:
                 # placeholder for elements that did not satisfy the above requirements. Otherwise, our index number would be faulty.
@@ -98,14 +92,14 @@ def loc_piv_r(table):
                 continue
 
         index = total.index(element)
-        return [index,c]
+        return [index, c]
 # similar process, returns a specific array element to be pivoted on.
 def loc_piv(table):
     if next_round(table):
         total = []
         n = find_neg(table)
-        for i,b in zip(table[:-1,n],table[:-1,-1]):
-            if i**2>0 and b/i>0:
+        for i,b in zip(table[:-1, n],table[:-1, -1]):
+            if i**2 > 0 and b/i > 0:
                 total.append(b/i)
             else:
                 # placeholder for elements that did not satisfy the above requirements. Otherwise, our index number would be faulty.
@@ -118,7 +112,7 @@ def loc_piv(table):
                 continue
 
         index = total.index(element)
-        return [index,n]
+        return [index, n]
 
 # Takes string input and returns a list of numbers to be arranged in tableu
 def convert(eq):
