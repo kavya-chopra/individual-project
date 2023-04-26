@@ -39,7 +39,50 @@ public class Sydx {
     return serverPort;
   }
 
-  
+  public void put(String name, Object value){
+
+    String type = getTypeMarker(value);
+
+    String valueAndType = new Document("value_type", type).append("value", value).toJson();
+
+    Document request = new Document("request_type", "PUT_REQUEST")
+            .append("name", name)
+            .append("value", valueAndType);
+
+    try {
+      connections.sendToAll(request);
+      storage.put(name, valueAndType);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static String getTypeMarker(Object value) {
+    Class<?> valueClassStr = value.getClass();
+    String valueClass = valueClassStr.toString().substring(valueClassStr.toString().lastIndexOf('.') + 1);
+    String type = null;
+    switch (valueClass) {
+      case "Integer" : type = "int";
+        break;
+      case "Float" : type = "float";
+        break;
+      case "Hashmap" : // merged with case "Dictionary"
+      case "Dictionary" : type = "dict";
+        break;
+      case "ArrayList" : type = "array";
+        break;
+      default :
+        new SydxException("Unsupported value datatype");
+        System.out.println("Cannot determine class");
+    }
+    return type;
+  }
+
+  public Object get(String name){
+    Document valueAndType = Document.parse(storage.get(name));
+    return valueAndType.get("value");
+  }
 
   public void show(){
     //TODO

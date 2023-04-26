@@ -1,5 +1,7 @@
 package sydx;
 
+import org.bson.Document;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -8,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Storage {
-  private Map<String, Object> dict;
+  private Map<String, String> dict;
   Lock lock;
   Logger log = Logger.getLogger(Storage.class.getName());
 
@@ -26,18 +28,18 @@ public class Storage {
     return exists;
   }
 
-  public void put(String name, Object value){
+  public void put(String name, String valueAndType){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
-    dict.put(name, value);
+    dict.put(name, valueAndType);
     log.log(Level.INFO, "Releasing storage lock");
     lock.unlock();
   }
 
-  public Object get(String name){
+  public String get(String name){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
-    Object value = null;
+    String value = null;
     if(dict.containsKey(name)){
       value = dict.get(name);
     }
@@ -46,11 +48,11 @@ public class Storage {
     return value;
   }
 
-  public Map<String, Object> getAll(){
+  public Map<String, String> getAll(){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
-    Map<String, Object> dictCopy = new HashMap<>();
-    for (Map.Entry<String, Object> entry : dict.entrySet()) {
+    Map<String, String> dictCopy = new HashMap<>();
+    for (Map.Entry<String, String> entry : dict.entrySet()) {
       dictCopy.put(entry.getKey(), entry.getValue());
     }
     log.log(Level.INFO, "Releasing storage lock");
@@ -58,7 +60,20 @@ public class Storage {
     return dictCopy;
   }
 
-  public void putAll(Map<String, Object> toAdd){
+  public void putAllFromMap(Map<String, Object> toAdd){
+    log.log(Level.INFO, "Acquiring storage lock");
+    lock.lock();
+    for (Map.Entry<String, Object> entry : toAdd.entrySet()) {
+      String valueAndType = new Document("value_type", Sydx.getTypeMarker(entry.getValue()))
+                            .append("value", entry.getValue())
+                            .toJson();
+      dict.put(entry.getKey(), valueAndType);
+    }
+    log.log(Level.INFO, "Releasing storage lock");
+    lock.unlock();
+  }
+
+  public void putAll(Map<String, String> toAdd){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
     dict.putAll(toAdd);
