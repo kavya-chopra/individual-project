@@ -7,12 +7,12 @@ import sydx
 def numpy_numeral_to_json_object(obj):
     if isinstance(obj, np.int32):
         return {
-            'type': 'numpy.int32',
+            'type': 'int32',
             'value': int(obj)
         }
     elif isinstance(obj, np.float64):
         return {
-            'type': 'numpy.float64',
+            'type': 'float64',
             'value': float(obj)
         }
     else:
@@ -20,9 +20,9 @@ def numpy_numeral_to_json_object(obj):
 
 def numpy_numeral_from_json_object(json_object):
     if isinstance(json_object, dict):
-        if 'type' in json_object and json_object['type'] == 'numpy.int32':
+        if 'type' in json_object and json_object['type'] == 'int32':
             return np.int32(json_object['value'])
-        elif 'type' in json_object and json_object['type'] == 'numpy.float64':
+        elif 'type' in json_object and json_object['type'] == 'float64':
             return np.float64(json_object['value'])
         else:
             raise ValueError('Unable to deserialise an object')
@@ -51,13 +51,13 @@ def numpy_array_to_json_object(obj):
     if not isinstance(obj, np.ndarray):
         raise ValueError('Unable to serialise an object')
     return {
-        'type': 'numpy.ndarray',
+        'type': 'array',
         'values': __numpy_array_to_list(obj)
     }
 
 def numpy_array_from_json_object(json_object):
     if isinstance(json_object, dict):
-        if 'type' in json_object and json_object['type'] == 'numpy.ndarray':
+        if 'type' in json_object and json_object['type'] == 'array':
             return __list_to_numpy_array(json_object['values'])
         else:
             raise ValueError('Unable to deserialise an object')
