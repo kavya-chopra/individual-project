@@ -1,4 +1,4 @@
-package demo;
+package sydx.test;
 
 import sydx.Sydx;
 import sydx.SydxException;

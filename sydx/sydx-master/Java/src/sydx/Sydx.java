@@ -1,7 +1,6 @@
 package sydx;
 
 import org.bson.Document;
-
 import java.io.IOException;
 
 public class Sydx {
