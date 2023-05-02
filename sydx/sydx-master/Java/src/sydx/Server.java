@@ -57,7 +57,6 @@ public class Server implements Runnable{
     BasicBSONDecoder decoder = new BasicBSONDecoder();
     BSONObject bsonObject = decoder.readObject(bsonData);
 
-    //Document receivedDoc = Document.parse(inputStream.readUTF());
     // Get response to the request by processing the request
     Document receivedDoc = new Document(bsonObject.toMap());
     Request request = new Request(receivedDoc);

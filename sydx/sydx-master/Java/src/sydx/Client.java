@@ -40,9 +40,13 @@ public class Client {
       System.out.println("Java Client connected to server");
 
       DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
-      outputStream.writeInt(request.toJson().getBytes().length);
-      outputStream.write(request.toJson().getBytes(StandardCharsets.UTF_8));
-      System.out.println("Sent request: " + request.toJson());
+//      outputStream.writeInt(request.toJson().getBytes(StandardCharsets.UTF_8).length);
+//      outputStream.write(request.toJson().getBytes(StandardCharsets.UTF_8));
+      byte[] requestBytes = BsonToBinaryAdapter.toBytes(request);
+      outputStream.writeInt(requestBytes.length);
+      outputStream.write(requestBytes);
+      System.out.println("Sent request length: " + requestBytes.length
+              + ". Sent request: " + requestBytes);
 
       DataInputStream inputStream = new DataInputStream(socket.getInputStream());
       int bsonDataLength = inputStream.readInt();

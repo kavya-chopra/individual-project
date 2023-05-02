@@ -6,25 +6,33 @@ import java.io.IOException;
 public class Sydx {
 
   private static Integer serverPort;
+  private static Server server;
   private static Storage storage = new Storage();
   private static Connections connections = new Connections();
+
+  public static void port(Integer port) throws SydxException {
+    if (serverPort != null){
+      throw new SydxException("Port already open");
+    }
+    serverPort = port;
+    server = new Server("", port, storage, connections);
+
+    Thread t = new Thread(server);
+    t.start();
+  }
+
+  public static void closePort() throws SydxException {
+    if (serverPort == null) {
+      throw new SydxException("Must open port before closing");
+    }
+    server.stop();
+    System.out.println("Closed port");
+  }
 
   static Client _connect(String host, int localPort){
     Client client = new Client(host, localPort, serverPort, storage);
     client.connect();
     return client;
-  }
-
-  public static void port(Integer port){
-    if (serverPort != null){
-      new SydxException("Port already open");
-      System.out.println("Port already open for java component");
-    }
-    serverPort = port;
-    Server server = new Server("", port, storage, connections);
-
-    Thread t = new Thread(server);
-    t.start();
   }
 
   public static String connect(String host, int port) throws SydxException {
@@ -62,9 +70,9 @@ public class Sydx {
     String valueClass = valueClassStr.toString().substring(valueClassStr.toString().lastIndexOf('.') + 1);
     String type = null;
     switch (valueClass) {
-      case "Integer" : type = "int";
+      case "Integer" : type = "int32";
         break;
-      case "Float" : type = "float";
+      case "Float" : type = "float64";
         break;
       case "String" : type = "string";
       break;
