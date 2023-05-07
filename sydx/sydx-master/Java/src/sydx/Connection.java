@@ -2,12 +2,12 @@ package sydx;
 
 public class Connection{
   private final String host;
-  private final Long pid;
+  private final Integer pid;
   private final int local_port;
   private final String date_time;
   private Client client;
 
-  public Connection(String host, Long pid, int local_port, String date_time, Client client){
+  public Connection(String host, Integer pid, int local_port, String date_time, Client client){
     this.host = host;
     this.pid = pid;
     this.local_port = local_port;
@@ -19,7 +19,7 @@ public class Connection{
     return this.host;
   }
 
-  public Long getPid(){
+  public Integer getPid(){
     return this.pid;
   }
 

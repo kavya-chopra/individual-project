@@ -12,10 +12,10 @@ import sydx.Connections;
 public class HandshakeRequest extends Request {
 
   private final String host;
-  private final Long pid;
+  private final Integer pid;
   private final int local_port;
 
-  public HandshakeRequest(String host, Long pid, int local_port) {
+  public HandshakeRequest(String host, Integer pid, int local_port) {
     this.host = host;
     this.pid = pid;
     this.local_port = local_port;
@@ -25,7 +25,7 @@ public class HandshakeRequest extends Request {
     return host;
   }
 
-  public Long getPid() {
+  public Integer getPid() {
     return pid;
   }
 
