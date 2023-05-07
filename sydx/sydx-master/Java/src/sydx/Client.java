@@ -1,7 +1,5 @@
 package sydx;
 
-import org.bson.BSONObject;
-import org.bson.BasicBSONDecoder;
 import org.bson.Document;
 
 import java.io.DataInputStream;
@@ -10,7 +8,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,17 +43,17 @@ public class Client {
       outputStream.writeInt(requestBytes.length);
       outputStream.write(requestBytes);
       System.out.println("Sent request length: " + requestBytes.length
-              + ". Sent request: " + requestBytes);
+              + ". Sent request: " + request.toJson());
 
       DataInputStream inputStream = new DataInputStream(socket.getInputStream());
       int bsonDataLength = inputStream.readInt();
       byte[] bsonData = new byte[bsonDataLength];
       inputStream.readFully(bsonData);
 
-      BasicBSONDecoder decoder = new BasicBSONDecoder();
-      BSONObject bsonObject = decoder.readObject(bsonData);
+//      BasicBSONDecoder decoder = new BasicBSONDecoder();
+//      BSONObject bsonObject = decoder.readObject(bsonData);
 
-      receivedDoc = new Document(bsonObject.toMap());
+      receivedDoc = BsonToBinaryAdapter.toDocument(bsonData);
       System.out.println("Received response: " + receivedDoc.toJson());
       this.socket.close();
 
@@ -68,26 +65,28 @@ public class Client {
   }
 
   public void connect(){
+
+    Document requestHandshake = null;
     try {
-      Document requestHandshake = new Document("request_type", "HANDSHAKE_REQUEST")
+      requestHandshake = new Document("request_type", "HANDSHAKE_REQUEST")
                           .append("host", InetAddress.getLocalHost().getHostName())
                           .append("pid", ProcessHandle.current().pid())
                           .append("local_port", this.localPort);
-      Document responseHandshake = sendRequest(requestHandshake);
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+    }
+
+    Document responseHandshake = sendRequest(requestHandshake);
       this.handle = responseHandshake.getString("connection_handle");
 
-      Map<String, String> values = this.storage.getAll();
+      Map<String, Document> values = this.storage.getAllSerialized();
 
       Document requestSyncStorage = new Document("request_type", "SYNC_STORAGE_REQUEST")
                           .append("storage_snapshot", values);
       Document responseSyncStorage = sendRequest(requestSyncStorage);
 
-      Map<String, String> theirStorageSnapshot = responseSyncStorage.get("storage_snapshot", new HashMap<String, String>());
-      storage.putAll(theirStorageSnapshot);
-
-    } catch (UnknownHostException e) {
-      e.printStackTrace();
-    }
+      Map<String, Object> theirStorageSnapshot = responseSyncStorage.get("storage_snapshot", new HashMap<String, Object>());
+      storage.putAllFromMap(theirStorageSnapshot);
   }
 
   public String getHandle(){

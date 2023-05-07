@@ -3,10 +3,7 @@ package sydx.RequestTypes;
 import java.io.IOException;
 import java.util.HashMap;
 
-import sydx.Connections;
-import sydx.Storage;
-import sydx.Sydx;
-import sydx.SydxException;
+import sydx.*;
 import org.bson.Document;
 
 
@@ -22,8 +19,8 @@ public class Request
 
   protected Request(){}
 
-  public Document processRequest(Storage storage, Connections connections)
-  {
+  // To be overridden
+  protected Document processRequest(Storage storage, Connections connections) throws SydxException {
     return null;
   }
 
@@ -34,17 +31,17 @@ public class Request
     {
       case "HANDSHAKE_REQUEST":
         typedRequest = new HandshakeRequest(receivedDoc.getString("host"),
-                                            receivedDoc.getLong("pid"),
+                                            receivedDoc.getInteger("pid"),
                                             receivedDoc.getInteger("local_port"));
         break;
 
       case "SYNC_STORAGE_REQUEST":
-        typedRequest = new SyncStorageRequest(receivedDoc.get("storage", new HashMap<String, String>()));
+        typedRequest = new SyncStorageRequest(receivedDoc.get("storage", new HashMap<String, Object>()));
         break;
 
       case "PUT_REQUEST":
         Object value = receivedDoc.get("value");
-        String valueAndType = new Document("value_type", Sydx.getTypeMarker(value))
+        String valueAndType = new Document("value_type", Converters.getTypeMarker(value))
                               .append("value", value)
                               .toJson();
         typedRequest = new PutRequest(receivedDoc.getString("name"), valueAndType);
