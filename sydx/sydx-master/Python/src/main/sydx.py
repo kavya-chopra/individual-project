@@ -166,13 +166,17 @@ class Server(object):
         
     def listen(self):
         logger = logging.getLogger()
-        self.__socket.listen(5)
+        self.__socket.listen(100)
         while threading.main_thread().is_alive():
+        # while True:
             logger.info('Waiting for a client to connect to the socket')
             client, address = self.__socket.accept()
             client.settimeout(60)
             logger.info('Client connected. Kicking off a new thread to service this client')
             threading.Thread(target=self.listenToClient, args=(client, address)).start()
+        self.__socket.close()
+        
+    def close(self):
         self.__socket.close()
     
     def receive_line(self, client):
@@ -188,7 +192,9 @@ class Server(object):
     def listenToClient(self, client, address):
         request_length = int.from_bytes(client.recv(4), byteorder='big')
         print("data length: ", request_length)
-        request = BSON.decode(client.recv(request_length))
+        foo = client.recv(request_length)
+        # print(f"received: {foo}")
+        request = BSON.decode(foo)
         print ("Received request: ", request)
         # request = self.receive_line(client)
         # request = request.rstrip()
@@ -311,8 +317,9 @@ def port(port):
         raise SydxException('Port already open')
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     request = Interpreter(__storage, __connections)
-    server = Server('', port, request)
-    threading.Thread(target=server.listen, args=()).start()
+    global __server
+    __server = Server('', port, request)
+    threading.Thread(target=__server.listen, args=()).start()
     __server_port = port
 
 def _connect(host, port):
@@ -389,6 +396,12 @@ def get(name):
     obj = __deserialise(json_object)
     logger.debug('Deserialisation result: %s' % str(obj))
     return obj
+
+def get_all_storage():
+    return __storage.get_all()
+    
+def close():
+    __server_port.close()
 
 def describe(obj):
     pass
