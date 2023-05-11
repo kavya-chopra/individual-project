@@ -4,3 +4,14 @@ S:\dev\Sydx\Excel\obj\Debug\Excel.csprojAssemblyReference.cache
 S:\dev\Sydx\Excel\obj\Debug\Excel.csproj.CoreCompileInputs.cache
 S:\dev\Sydx\Excel\obj\Debug\Excel.dll
 S:\dev\Sydx\Excel\obj\Debug\Excel.pdb
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\bin\Debug\Excel.dll
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\bin\Debug\Excel.pdb
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\bin\Debug\MongoDB.Bson.dll
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\bin\Debug\Newtonsoft.Json.dll
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\bin\Debug\Newtonsoft.Json.xml
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\obj\Debug\Excel.csproj.AssemblyReference.cache
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\obj\Debug\Excel.csproj.CoreCompileInputs.cache
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\obj\Debug\Excel.csproj.CopyComplete
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\obj\Debug\Excel.dll
+C:\Users\kavya\Downloads\individual-project\sydx\sydx-master\Excel\obj\Debug\Excel.pdb

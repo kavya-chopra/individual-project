@@ -996,7 +996,7 @@
             <summary>
             Checks if the <paramref name="attributeName"/> is a namespace attribute.
             </summary>
-            <param name="attributeName">Attribute name to test.</param>
+            <param name="attributeName">Attribute name to demo.</param>
             <param name="prefix">The attribute name prefix if it has one, otherwise an empty string.</param>
             <returns><c>true</c> if attribute name is for a namespace attribute, otherwise <c>false</c>.</returns>
         </member>
