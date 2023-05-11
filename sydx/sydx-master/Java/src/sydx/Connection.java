@@ -1,13 +1,15 @@
 package sydx;
 
+import java.time.LocalDateTime;
+
 public class Connection{
   private final String host;
   private final Integer pid;
   private final int local_port;
-  private final String date_time;
+  private final LocalDateTime date_time;
   private Client client;
 
-  public Connection(String host, Integer pid, int local_port, String date_time, Client client){
+  public Connection(String host, Integer pid, int local_port, LocalDateTime date_time, Client client){
     this.host = host;
     this.pid = pid;
     this.local_port = local_port;
@@ -27,7 +29,7 @@ public class Connection{
     return this.local_port;
   }
 
-  public String getDate_time(){
+  public LocalDateTime getDateTime(){
     return this.date_time;
   }
 

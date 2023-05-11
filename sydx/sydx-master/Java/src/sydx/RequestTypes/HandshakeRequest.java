@@ -36,10 +36,10 @@ public class HandshakeRequest extends Request {
   @Override
   public Document processRequest(Storage storage, Connections connections) {
     String handle = UUID.randomUUID().toString();
-    Instant timeNow = Instant.now();
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
+//    Instant timeNow = Instant.now();
+//    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
 
-    connections.add(handle, new Connection(host, pid, local_port, formatter.format(timeNow), null));
+    connections.add(handle, new Connection(host, pid, local_port, java.time.LocalDateTime.now(), null));
 
     responseDoc.append("response_type", "HANDSHAKE_RESPONSE");
     responseDoc.append("connection_handle", handle);

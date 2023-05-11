@@ -20,7 +20,7 @@ public class SyncStorageRequest extends Request {
     storage.putAllFromMap(storageSnapshot);
 
     responseDoc.append("response_type", "SYNC_STORAGE_RESPONSE");
-    responseDoc.append("our_storage_snapshot", storage.getAllSerialized());
+    responseDoc.append("storage_snapshot", storage.getAllSerialized());
     return responseDoc;
   }
 }

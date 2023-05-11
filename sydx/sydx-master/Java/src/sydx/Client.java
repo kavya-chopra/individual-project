@@ -19,6 +19,7 @@ public class Client {
   private Storage storage;
   private Socket socket;
   private String handle;
+  private Long pid;
 
   public Client(String host, int port, Integer localPort, Storage storage){
     this.host = host;
@@ -37,8 +38,6 @@ public class Client {
       System.out.println("Java Client connected to server");
 
       DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
-//      outputStream.writeInt(request.toJson().getBytes(StandardCharsets.UTF_8).length);
-//      outputStream.write(request.toJson().getBytes(StandardCharsets.UTF_8));
       byte[] requestBytes = BsonToBinaryAdapter.toBytes(request);
       outputStream.writeInt(requestBytes.length);
       outputStream.write(requestBytes);
@@ -49,9 +48,6 @@ public class Client {
       int bsonDataLength = inputStream.readInt();
       byte[] bsonData = new byte[bsonDataLength];
       inputStream.readFully(bsonData);
-
-//      BasicBSONDecoder decoder = new BasicBSONDecoder();
-//      BSONObject bsonObject = decoder.readObject(bsonData);
 
       receivedDoc = BsonToBinaryAdapter.toDocument(bsonData);
       System.out.println("Received response: " + receivedDoc.toJson());
@@ -68,9 +64,10 @@ public class Client {
 
     Document requestHandshake = null;
     try {
+      this.pid = ProcessHandle.current().pid();
       requestHandshake = new Document("request_type", "HANDSHAKE_REQUEST")
                           .append("host", InetAddress.getLocalHost().getHostName())
-                          .append("pid", ProcessHandle.current().pid())
+                          .append("pid", this.pid)
                           .append("local_port", this.localPort);
     } catch (UnknownHostException e) {
       e.printStackTrace();
@@ -85,11 +82,19 @@ public class Client {
                           .append("storage_snapshot", values);
       Document responseSyncStorage = sendRequest(requestSyncStorage);
 
-      Map<String, Object> theirStorageSnapshot = responseSyncStorage.get("storage_snapshot", new HashMap<String, Object>());
-      storage.putAllFromMap(theirStorageSnapshot);
+      Map<String, Document> theirStorageSnapshot = responseSyncStorage.get("storage_snapshot", new HashMap<String, Document>());
+      storage.putAllFromSerializedMap(theirStorageSnapshot);
   }
 
   public String getHandle(){
     return this.handle;
+  }
+
+  public String getHost() {
+    return this.host;
+  }
+
+  public Long getPid() {
+    return this.pid;
   }
 }

@@ -34,6 +34,14 @@ public class Storage {
     return exists;
   }
 
+  public void put(String name, Document value) {
+    log.log(Level.INFO, "Acquiring storage lock");
+    lock.lock();
+    dict.put(name, value);
+    log.log(Level.INFO, "Releasing storage lock");
+    lock.unlock();
+  }
+
   public void put(String name, Object value){
     log.log(Level.INFO, "Acquiring storage lock");
     lock.lock();
@@ -88,6 +96,16 @@ public class Storage {
     log.log(Level.INFO, "Releasing storage lock");
     lock.unlock();
     return dictCopy;
+  }
+
+  public void putAllFromSerializedMap(Map<String, Document> toAdd){
+    log.log(Level.INFO, "Acquiring storage lock");
+    lock.lock();
+    for (Map.Entry<String, Document> entry : toAdd.entrySet()) {
+      dict.put(entry.getKey(), entry.getValue());
+    }
+    log.log(Level.INFO, "Releasing storage lock");
+    lock.unlock();
   }
 
   public void putAllFromMap(Map<String, Object> toAdd){

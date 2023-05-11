@@ -2,6 +2,7 @@ package sydx;
 
 import org.bson.Document;
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 public class Sydx {
 
@@ -9,6 +10,11 @@ public class Sydx {
   private static Server server;
   private static Storage storage = new Storage();
   private static Connections connections = new Connections();
+
+  public Sydx() {
+    storage = new Storage();
+    connections = new Connections();
+  }
 
   public static void port(Integer port) throws SydxException {
     if (serverPort != null){
@@ -32,6 +38,7 @@ public class Sydx {
   static Client _connect(String host, int localPort){
     Client client = new Client(host, localPort, serverPort, storage);
     client.connect();
+    connections.add(client.getHandle(), new Connection(host, Math.toIntExact(client.getPid()), localPort, LocalDateTime.now(), client));
     return client;
   }
 

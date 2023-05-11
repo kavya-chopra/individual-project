@@ -63,7 +63,7 @@ public class Server implements Runnable{
     Document response = request.getResponse(storage, connections);
 
     // Write the response back to the client
-    byte[] responseBytes = response.toJson().getBytes();
+    byte[] responseBytes = BsonToBinaryAdapter.toBytes(response); //response.toJson().getBytes();
     outputStream.writeInt(responseBytes.length);
     outputStream.write(responseBytes);
   }
