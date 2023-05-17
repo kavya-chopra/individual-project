@@ -9,15 +9,15 @@ import java.util.Map;
 
 public class SyncStorageRequest extends Request {
 
-  private Map<String, Object> storageSnapshot;
+  private Map<String, Document> storageSnapshot;
 
-  public SyncStorageRequest(Map<String, Object> storageSnapshot){
+  public SyncStorageRequest(Map<String, Document> storageSnapshot){
     this.storageSnapshot = storageSnapshot;
   }
 
   @Override
   public Document processRequest(Storage storage, Connections connections) throws SydxException {
-    storage.putAllFromMap(storageSnapshot);
+    storage.putAllFromSerializedMap(storageSnapshot);
 
     responseDoc.append("response_type", "SYNC_STORAGE_RESPONSE");
     responseDoc.append("storage_snapshot", storage.getAllSerialized());

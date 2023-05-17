@@ -63,8 +63,6 @@ public class Sydx {
             .append("name", name)
             .append("value", valueAndType);
 
-    System.out.println("Sending PUT_REQUEST to all connections: " + request.toJson());
-
     try {
       connections.sendToAll(request);
       storage.put(name, value);
@@ -77,7 +75,6 @@ public class Sydx {
 
 
   public static Object get(String name){
-    // Document valueAndType = storage.get(name);
     try {
       return storage.get(name);
     } catch (SydxException e) {

@@ -41,8 +41,7 @@ public class Client {
       byte[] requestBytes = BsonToBinaryAdapter.toBytes(request);
       outputStream.writeInt(requestBytes.length);
       outputStream.write(requestBytes);
-      System.out.println("Sent request length: " + requestBytes.length
-              + ". Sent request: " + request.toJson());
+      System.out.println("Sent request: " + request.toJson());
 
       DataInputStream inputStream = new DataInputStream(socket.getInputStream());
       int bsonDataLength = inputStream.readInt();

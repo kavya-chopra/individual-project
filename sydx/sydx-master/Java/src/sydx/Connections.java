@@ -23,7 +23,7 @@ public class Connections {
     for (Map.Entry<String, Connection> connectionEntry : connections.entrySet()) {
       Connection connection = connectionEntry.getValue();
       if (connection.getClient() == null){
-        connection.setClient(_connect(connection.getHost(), connection.getLocal_port()));
+        connection.setClient(_connect(connection.getHost(), connection.getLocalPort()));
       }
       connection.getClient().sendRequest(request);
     }

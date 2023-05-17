@@ -3,6 +3,7 @@ package sydx.RequestTypes;
 import java.io.IOException;
 import java.util.HashMap;
 
+import org.bson.BasicBSONObject;
 import sydx.*;
 import org.bson.Document;
 
@@ -36,15 +37,17 @@ public class Request
         break;
 
       case "SYNC_STORAGE_REQUEST":
-        typedRequest = new SyncStorageRequest(receivedDoc.get("storage", new HashMap<String, Object>()));
+        typedRequest = new SyncStorageRequest(receivedDoc.get("storage", new HashMap<String, Document>()));
         break;
 
       case "PUT_REQUEST":
-        Object value = receivedDoc.get("value");
-        String valueAndType = new Document("value_type", Converters.getTypeMarker(value))
-                              .append("value", value)
-                              .toJson();
-        typedRequest = new PutRequest(receivedDoc.getString("name"), valueAndType);
+        BasicBSONObject value = (BasicBSONObject) receivedDoc.get(("value"));
+        Document valueDoc = new Document("value_type", value.getString("value_type")).append("value", value.get("value"));
+        // receivedDoc.get("value", new Document());
+//        String valueAndType = new Document("value_type", Converters.getTypeMarker(value))
+//                              .append("value", value)
+//                              .toJson();
+        typedRequest = new PutRequest(receivedDoc.getString("name"), valueDoc);
         break;
 
       case "INCOMING_DATA_REQUEST":

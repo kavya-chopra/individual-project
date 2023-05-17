@@ -6,9 +6,9 @@ import sydx.Storage;
 
 public class PutRequest extends Request {
   private String name;
-  private String value;
+  private Document value;
 
-  public PutRequest(String name, String value){
+  public PutRequest(String name, Document value){
     this.name = name;
     this.value = value;
   }

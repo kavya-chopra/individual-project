@@ -1,8 +1,6 @@
 package sydx.RequestTypes;
 
 import java.util.UUID;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 
 import org.bson.Document;
 import sydx.Connection;
@@ -13,12 +11,12 @@ public class HandshakeRequest extends Request {
 
   private final String host;
   private final Integer pid;
-  private final int local_port;
+  private final int localPort       ;
 
-  public HandshakeRequest(String host, Integer pid, int local_port) {
+  public HandshakeRequest(String host, Integer pid, int localPort) {
     this.host = host;
     this.pid = pid;
-    this.local_port = local_port;
+    this.localPort = localPort;
   }
 
   public String getHost(){
@@ -29,8 +27,8 @@ public class HandshakeRequest extends Request {
     return pid;
   }
 
-  public int getLocal_port() {
-    return local_port;
+  public int getLocalPort() {
+    return localPort;
   }
 
   @Override
@@ -39,7 +37,7 @@ public class HandshakeRequest extends Request {
 //    Instant timeNow = Instant.now();
 //    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSS");
 
-    connections.add(handle, new Connection(host, pid, local_port, java.time.LocalDateTime.now(), null));
+    connections.add(handle, new Connection(host, pid, localPort, java.time.LocalDateTime.now(), null));
 
     responseDoc.append("response_type", "HANDSHAKE_RESPONSE");
     responseDoc.append("connection_handle", handle);

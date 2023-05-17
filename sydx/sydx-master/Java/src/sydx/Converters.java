@@ -12,7 +12,7 @@ public class Converters {
   public static String getTypeMarker(Object value) {
     Class<?> valueClassStr = value.getClass();
     String valueClass = valueClassStr.toString().substring(valueClassStr.toString().lastIndexOf('.') + 1);
-    String type = null;
+    String type;
     switch (valueClass) {
       case "Integer" : type = "int";
         break;
@@ -67,31 +67,31 @@ public class Converters {
 
     } else {
       Document uncommonTypeObj = (Document) obj;
-      String valueType = uncommonTypeObj.getString("value_type");
-      serialized.append("value_type", valueType);
+      return uncommonTypeObj;
+//      String valueType = uncommonTypeObj.getString("value_type");
+//      serialized.append("value_type", valueType);
+//
+//      if (valueType.equals("dict")) {
+//        Map dictSerialized = new HashMap<String, Document>();
+//        Map dict = uncommonTypeObj.get("value", new HashMap<String, Object>());
+//        dict.forEach((key, value) -> dictSerialized.put(key, serialize(value)));
+//        serialized.append("value", dictSerialized);
+//
+//      } else if (valueType.equals("list") || valueType.equals("tuple") || valueType.equals("array")) {
+//        List listSerialized = new ArrayList<Document>();
+//        List list = uncommonTypeObj.get("value", new ArrayList<Object>());
+//        for (Object value : list) {
+//          Document serializedVal = serialize(value);
+//          listSerialized.add(serializedVal);
+//        }
+//        serialized.append("value", listSerialized);
 
-      if (valueType.equals("dict")) {
-        Map dictSerialized = new HashMap<Document, Document>();
-        Map dict = uncommonTypeObj.get("value", new HashMap<String, Object>());
-        dict.forEach((key, value) -> dictSerialized.put(key, serialize(value)));
-        serialized.append("value", dictSerialized);
-
-      } else if (valueType.equals("list") || valueType.equals("tuple") || valueType.equals("array")) {
-        List listSerialized = new ArrayList<Document>();
-        List list = uncommonTypeObj.get("value", new ArrayList<Object>());
-        for (Object value : list) {
-          Document serializedVal = serialize(value);
-          listSerialized.add(serializedVal);
-        }
-        serialized.append("value", listSerialized);
-      }
     }
-
     return serialized;
   }
 
-  public static Object deserialize(Document json_obj) throws SydxException {
-    String valueType = json_obj.getString("value_type");
+  public static Object deserialize(Document jsonObj) throws SydxException {
+    String valueType = jsonObj.getString("value_type");
 
     switch (valueType) {
       case "int":
@@ -99,13 +99,13 @@ public class Converters {
       case "float":
       case "float64":
       case "string":
-        return json_obj.get("value");
+        return jsonObj.get("value");
 
       case "list":
       case "tuple":
       case "array":
         List<Object> deserializedList = new ArrayList<>();
-        List<Document> serializedList = json_obj.get("value", new ArrayList<Document>());
+        List<Document> serializedList = jsonObj.get("value", new ArrayList<Document>());
         for (Document serializedValue : serializedList) {
           deserializedList.add(deserialize(serializedValue));
         }
@@ -113,7 +113,7 @@ public class Converters {
 
       case "dict":
         Map<String, Object> deserializedMap = new HashMap<>();
-        Map<String, Document> serializedMap = json_obj.get("value", new HashMap<String, Document>());
+        Map<String, Document> serializedMap = jsonObj.get("value", new HashMap<String, Document>());
         for (Map.Entry<String, Document> entry : serializedMap.entrySet()) {
           deserializedMap.put(entry.getKey(), deserialize(entry.getValue()));
         }
