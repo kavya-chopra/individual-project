@@ -1,18 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Bson;
 using ExcelDna.Integration;
+using System.IO;
+using Newtonsoft.Json.Bson;
+using MongoDB.Bson;
+using MongoDB.Driver;
+using Amazon.Runtime.Internal;
+using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization;
+using System.Collections;
+using Microsoft.Win32.SafeHandles;
+using System.Diagnostics;
+using System.Linq;
 using ExcelDna.Integration.Extensibility;
+using System.Runtime.CompilerServices;
 
 namespace Sydx
 {
-    public class Server
+    public class ServerSydx
     {
         public class StateObject
         {
@@ -32,9 +41,7 @@ namespace Sydx
 
         private ManualResetEvent allDone = new ManualResetEvent(false);
 
-        private Connections connections = new Connections();
-
-        public Server(int port, Storage storage)
+        public ServerSydx(int port, Storage storage)
         {
             this.port = port;
             this.storage = storage;
@@ -67,7 +74,6 @@ namespace Sydx
             Socket handler = socket.EndAccept(ar);
 
             this.storage.Put("connected", 357.0);
-            Console.WriteLine("Server accepted client");
 
             StateObject state = new StateObject();
             state.workSocket = handler;
@@ -91,13 +97,11 @@ namespace Sydx
 
                 // Check for end-of-file tag. If it is not there, read more data
                 content = state.sb.ToString();
-                Console.WriteLine(content);
 
                 if (content.IndexOf("<EOF>") > -1)
                 {
                     // All the data has been read from the client
                     this.storage.Put("message", content);
-                    Console.WriteLine(content);
 
                     Send(handler, "Thank you.");
                 }
@@ -132,107 +136,385 @@ namespace Sydx
             }
             catch (Exception e)
             {
-                Console.WriteLine("SendCallback failed " + e);
                 // TODO Log exception
             }
         }
     }
 
-
-    public class Connections
+    public class Server
     {
-        private Dictionary<string, Connection> connections = new Dictionary<string, Connection>();
+        private String host;
+        private int port;
+        private Socket serverSocket;
+        private Boolean mainThreadIsRunning;
+        private Storage storage;
+        private Connections connections;
 
-        public Connections() { }
-
-        public void Add(string handle, Connection connection)
+        public Server(String host, int port, Storage storage, Connections connections)
         {
-            Monitor.Enter(connections);
-            if (!connections.ContainsKey(handle))
-            {
-                connections.Add(handle, connection);
-            }
-            else
-            {
-                connections[handle] = connection;
-            }
-            Monitor.Exit(connections);
+            this.host = host;
+            this.port = port;
+            this.storage = storage;
+            this.connections = connections;
+            this.mainThreadIsRunning = true;
         }
 
-        public void SendToAll(Request request)
+        private void listen()
         {
-            Monitor.Enter(connections);
-            foreach(KeyValuePair<string, Connection> entry in connections)
+            TcpListener server = new TcpListener(IPAddress.Any, port);
+            server.Start();
+
+            Console.WriteLine("Listening on port: " + port);
+            Console.WriteLine("Waiting for client to connect");
+
+            while (mainThreadIsRunning)
             {
-                Connection connection = entry.Value;
-                if(connection.Client is null)
+                TcpClient client = server.AcceptTcpClient();
+                Console.WriteLine("Accepted client: " + client.Client.RemoteEndPoint);
+                ListenToClient(client);
+            }
+
+            server.Stop();
+        }
+
+        public void stop()
+        {
+            this.mainThreadIsRunning = false;
+        }
+        
+        private void ListenToClient(TcpClient client)
+        {
+            NetworkStream stream = client.GetStream();
+
+            using (var reader = new BsonBinaryReader(stream))
+            {
+                int receivedLength = BsonSerializer.Deserialize<int>(reader);
+                BsonDocument receivedRequest = BsonSerializer.Deserialize<BsonDocument>(reader);
+                Console.WriteLine("Received from client: " + receivedRequest.ToJson());
+
+                BsonDocument response = new Request(receivedRequest).GetResponse(storage, connections);
+                using (var writer = new BsonBinaryWriter(stream))
                 {
-                    //TODO: _connect method
-                    //connection.Client = _connect(connection.Host, connection.LocalPort);
+                    BsonSerializer.Serialize(writer, response.ToBson().Length);
+                    Console.WriteLine("Sending response to client: " + response.ToJson());
+                    BsonSerializer.Serialize(writer, response);
                 }
-                connection.Client.SendRequest(request);
             }
-            Monitor.Exit(connections);
         }
 
+        public void run()
+        {
+            this.listen();
+        }
     }
-
 
     public class Client
     {
-        public Client(Object host, int port, int localPort, Storage storage)
+        private string host;
+        private int port;
+        private int localPort;
+        private Storage storage;
+        private TcpClient socket;
+        private String handle;
+        private int pid;
+
+        public Client(string host, int port, int localPort, Storage storage)
         {
-            this.Host = host;
-            this.Port = port;
-            this.LocalPort = localPort;
-            this.Storage = storage;
-            this.Handle = null;
+            this.host = host;
+            this.port = port;
+            this.localPort = localPort;
+            this.storage = storage;
+            this.handle = null;
         }
 
-        public Object Host { get; }
-        public int Port { get; }
-        public int LocalPort { get; }
-        public Storage Storage { get; }
-        public Object Handle { get; set; }
-
-        public void SendRequest(Request request)
+        public string Handle()
         {
-            //TODO
-            throw new NotImplementedException();
+            return this.handle;
+        }
+
+        public string Host()
+        {
+            return this.host;
+        }
+
+        public int Pid()
+        {
+            return this.pid;
+        }
+
+        public BsonDocument SendRequest(BsonDocument request)
+        {
+            BsonDocument receivedResponse;
+            this.socket = new TcpClient(host, port);
+            NetworkStream stream = socket.GetStream();
+
+            using (var writer = new BsonBinaryWriter(stream))
+            {
+                Console.WriteLine("Sending request: " + request.ToJson());
+                BsonSerializer.Serialize(writer, request.ToBson().Length);
+                BsonSerializer.Serialize(writer, request);
+
+                using (var reader = new BsonBinaryReader(stream))
+                {
+                    int receivedLength = BsonSerializer.Deserialize<int>(reader);
+                    receivedResponse = BsonSerializer.Deserialize<BsonDocument>(reader);
+                    Console.WriteLine("Received response: " + receivedResponse.ToJson());
+                }
+            }
+
+            return receivedResponse;
         }
 
         public void Connect()
         {
-            //TODO
-            throw new NotImplementedException();
+            this.pid = Process.GetCurrentProcess().Id;
+            BsonDocument requestHandshake = new BsonDocument(new BsonElement("request_type", "HANDSHAKE_REQUEST")).
+                                                         Add(new BsonElement("host", Dns.GetHostName())).
+                                                         Add(new BsonElement("pid", this.pid)).
+                                                         Add(new BsonElement("local_port", this.localPort));
+            BsonDocument responseHandshake = SendRequest(requestHandshake);
+            this.handle = responseHandshake.GetValue("connection_handle").AsString;
+
+            Dictionary<string, BsonDocument> serializedDict = storage.getAllSerialized();
+            BsonDocument requestSynStorage = new BsonDocument(new BsonElement("request_type", "SYNC_STORAGE_REQUEST")).
+                                                        Add(new BsonElement("storage_snapshot", serializedDict.ToBsonDocument()));
+
+            BsonDocument responseSyncStorage = SendRequest(requestSynStorage);
+
+            BsonDocument theirStorageSnapshot = responseSyncStorage.GetValue("storage_snapshot").AsBsonDocument;
+            Dictionary<string, BsonDocument> dictSerialized = new Dictionary<string, BsonDocument>();
+
+            foreach (BsonElement elem in theirStorageSnapshot)
+            {
+                dictSerialized.Add(elem.Name, elem.Value.AsBsonDocument);
+            }
+
+            storage.PutAllSerialized(dictSerialized);
         }
+
     }
 
+    public class Connections
+    {
+        private Dictionary<string, Connection> connections;
+
+        public Connections()
+        {
+            this.connections = new Dictionary<string, Connection>();
+        }
+
+        public void Add(string handle, Connection connection)
+        {
+            if (connections.ContainsKey(handle))
+            {
+                connections[handle] = connection;
+            } else
+            {
+                connections.Add(handle, connection);
+            }
+        }
+
+        public void SendToAll(BsonDocument request, Sydx sydx)
+        {
+            foreach (KeyValuePair<string, Connection> entry in connections)
+            {
+                Connection connection = entry.Value;
+
+                if (connection.Client() is null)
+                {
+                    connection.setClient(sydx._connect(connection.Host(), connection.LocalPort()));
+                }
+                BsonDocument response = connection.Client().SendRequest(request);
+                Console.WriteLine(response.AsString);
+            }
+        }
+    }
 
     public class Connection
     {
-        public Connection(object host, string pid, int localPort, DateTime dateTime, Client client)
+        private String host;
+        private int pid;
+        private int localPort;
+        private string dateTime;
+        private Client client;
+
+        public Connection(String host, int pid, int localPort, string dateTime, Client client)
         {
-            this.Host = host;
-            this.Pid = pid;
-            this.LocalPort = localPort;
-            this.DateTime = dateTime;
-            this.Client = client;
+            this.host = host;
+            this.pid = pid;
+            this.localPort = localPort;
+            this.dateTime = dateTime;
+            this.client = client;
         }
 
-        public Object Host { get; }
-        public String Pid { get; }
-        public int LocalPort { get; }
-        public DateTime DateTime { get; }
-        public Client Client { get; set; }
+        public String Host()
+        {
+            return this.host;
+        }
+
+        public int Pid()
+        {
+            return this.pid;
+        }
+
+        public int LocalPort()
+        {
+            return this.localPort;
+        }
+
+        public string DateTime()
+        {
+            return this.dateTime;
+        }
+
+        public Client Client()
+        {
+            return this.client;
+        }
+
+        public void setClient(Client client)
+        {
+            this.client = client;
+        }
     }
 
+    public class Request
+    {
+        private BsonDocument requestDoc;
+
+        public Request(BsonDocument request)
+        {
+            this.requestDoc = request;
+        }
+
+        protected Request() { }
+
+        protected BsonDocument Process(Storage storage, Connections connections)
+        {
+            return null;
+        }
+
+        public BsonDocument GetResponse(Storage storage, Connections connections)
+        {
+            string requestType = requestDoc.GetValue("request_type").AsString;
+
+            Request request = null;
+
+            switch (requestType)
+            {
+                case "HANDSHAKE_REQUEST":
+                    request = new HandshakeRequest(requestDoc.GetValue("host").AsString,
+                                                   requestDoc.GetValue("pid").AsInt64,
+                                                   requestDoc.GetValue("local_port").AsInt32);
+                    break;
+                case "SYNC_STORAGE_REQUEST":
+                    request = new SyncStorageRequest(requestDoc.GetValue("storage").AsBsonDocument);
+                    break;
+                case "PUT_REQUEST":
+                    request = new PutRequest(requestDoc.GetValue("name").AsString,
+                                            requestDoc.GetValue("value").AsBsonDocument);
+                    break;
+                case "INCOMING_DATA_REQUEST":
+                    request = new IncomingDataRequest();
+                    break;
+                default: throw new Exception("Unexpected request type.");
+            }
+
+            return request.Process(storage, connections);
+        }
+    }
+
+    public class HandshakeRequest : Request
+    {
+        private string host;
+        private Int64 pid;
+        private Int32 localPort;
+        public HandshakeRequest(string host, Int64 pid, Int32 localPort)
+        {
+            this.host = host;
+            this.pid = pid;
+            this.localPort = localPort;
+        }
+
+        public new BsonDocument Process(Storage storage, Connections connections)
+        {
+            string handle = System.Guid.NewGuid().ToString();
+            string dateTime = System.DateTime.Now.ToString("dddd , MMM dd yyyy,hh:mm:ss");
+
+            connections.Add(handle, new Connection(host, (int)pid, localPort, dateTime, null));
+
+            BsonDocument responseDoc = new BsonDocument();
+            responseDoc.Add(new BsonElement("response_type", "HANDSHAKE_RESPONSE")).
+                        Add(new BsonElement("connection_handle", handle));
+
+            return responseDoc;
+        }
+    }
+
+    public class PutRequest : Request
+    {
+        private string name;
+        private BsonDocument value;
+
+        public PutRequest(string name, BsonDocument value) 
+        { 
+            this.name = name; 
+            this.value = value; 
+        }
+
+        public new BsonDocument Process(Storage storage, Connections connections)
+        {
+            storage.Put(name, value);
+
+            BsonDocument responseDoc = new BsonDocument();
+            responseDoc.Add(new BsonElement("response_type", "PUT_RESPONSE")).
+                        Add(new BsonElement("result", "SUCCESS"));
+            return responseDoc;
+        }
+    }
+
+    public class SyncStorageRequest : Request {
+        private Dictionary<string, BsonDocument> storageSnapshot;
+        public SyncStorageRequest(BsonDocument storage) 
+        {
+            storageSnapshot = new Dictionary<string, BsonDocument>();
+            foreach(BsonElement element in storage) 
+            {
+                storageSnapshot.Add(element.Name, element.Value.AsBsonDocument);
+            }
+        }
+
+        public new BsonDocument Process(Storage storage, Connections connections)
+        {
+            storage.PutAllSerialized(storageSnapshot);
+
+            BsonDocument responseDoc = new BsonDocument();
+            responseDoc.Add(new BsonElement("response_type", "SYNC_STORAGE_RESPONSE")).
+                        Add(new BsonElement("storage_snapshot", storage.getAllSerialized().ToBsonDocument()));
+            return responseDoc;
+        }
+    }
+
+    public class IncomingDataRequest : Request
+    {
+        public IncomingDataRequest() { }
+
+        public new BsonDocument Process(Storage storage, Connections connections)
+        {
+            return null;
+        }
+    }
 
     public class Storage
     {
-        private static readonly Dictionary<string, object> dict = new Dictionary<string, object>();
+        private Dictionary<string, BsonDocument> dict;
 
-        public void Put(string name, object value)
+        public Storage() 
+        {
+            this.dict = new Dictionary<string, BsonDocument>();
+        }
+
+        public void Put(string name, BsonDocument value)
         {
             Monitor.Enter(dict);
             if (!dict.ContainsKey(name))
@@ -246,9 +528,43 @@ namespace Sydx
             Monitor.Exit(dict);
         }
 
-        public object Get(string name)
+        public void Put(string name, object value)
         {
-            object value = null;
+            Monitor.Enter(dict);
+            if (!dict.ContainsKey(name))
+            {
+                dict.Add(name, Converters.Serialize(value));
+            }
+            else
+            {
+                dict[name] = Converters.Serialize(value);
+            }
+            Monitor.Exit(dict);
+        }
+
+        public void PutAllSerialized(Dictionary<string, BsonDocument> dictSerialized)
+        {
+            Monitor.Enter(dict);
+            foreach(KeyValuePair<string, BsonDocument> entry in dictSerialized)
+            {
+                this.Put(entry.Key, entry.Value);
+            }
+            Monitor.Exit(dict);
+        }
+
+        public void PutAll(Dictionary<string, object> dictToPut)
+        {
+            Monitor.Enter(dict);
+            foreach (KeyValuePair<string, object> entry in dictToPut)
+            {
+                this.Put(entry.Key, Converters.Serialize(entry.Value));
+            }
+            Monitor.Exit(dict);
+        }
+
+        public BsonDocument GetSerialized(string name)
+        {
+            BsonDocument value = null;
             Monitor.Enter(dict);
             if (dict.ContainsKey(name))
             {
@@ -258,102 +574,256 @@ namespace Sydx
             return value;
         }
 
-    }
-
-    public abstract class Request
-    {
-        public String request_type { get; set; }
-
-        protected Socket __handler { get; set; }
-        public abstract void process(Storage storage, Connections connections);
-
-        public static Request deserializeRequest(Socket handler, String content)
+        public object Get(string name)
         {
-            Request r = JsonConvert.DeserializeObject<Request>(content);
-            Request typed_request; 
-            
-            switch(r.request_type)
+            object value = null;
+            Monitor.Enter(dict);
+            if (dict.ContainsKey(name))
             {
-                case "HANDSHAKE_REQUEST": 
-                    typed_request = JsonConvert.DeserializeObject<HandshakeRequest>(content);
-                    break;
-                case "SYNC_STORAGE_REQUEST":
-                    typed_request = JsonConvert.DeserializeObject<SyncStorageRequest>(content);
-                    break;
-                case "PUT_REQUEST":
-                    typed_request = JsonConvert.DeserializeObject<PutRequest>(content);
-                    break;
-                case "INCOMING_DATA_REQUEST":
-                    typed_request = JsonConvert.DeserializeObject<IncomingDataRequest>(content);
-                    break;
+                value = Converters.Deserialize(dict[name]);
+            }
+            Monitor.Exit(dict);
+            return value;
+        }
+
+        public bool Contains(string name)
+        {
+            return dict.ContainsKey(name);
+        }
+
+        public Dictionary<string, BsonDocument> getAllSerialized()
+        {
+            Dictionary<string, BsonDocument> dictCopy = new Dictionary<string, BsonDocument>();
+            Monitor.Enter(dict);
+            foreach(KeyValuePair<string, BsonDocument> entry in dict)
+            {
+                dictCopy.Add(entry.Key, entry.Value);
+            }
+            Monitor.Exit(dict);
+            return dictCopy;
+        }
+
+        public Dictionary<string, object> getAll()
+        {
+            Dictionary<string, object> dictCopy = new Dictionary<string, object>();
+            Monitor.Enter(dict);
+            foreach (KeyValuePair<string, BsonDocument> entry in dict)
+            {
+                dictCopy.Add(entry.Key, Converters.Deserialize(entry.Value));
+            }
+            Monitor.Exit(dict);
+            return dictCopy;
+        }
+    }
+
+    public class Converters
+    {
+        public static string getTypeMarker(object obj)
+        {
+            if (obj is int || obj is long || obj is Int64) return "int";
+            else if (obj is Int32) return "int32";
+            else if (obj is float || obj is double) return "float";
+            else if (obj is string) return "string";
+            else if (obj is IDictionary) return "dict";
+            else if (obj is IList) return "list";
+            else return "unknown";
+        }
+
+        public static BsonDocument Serialize(object value)
+        {
+            string typeMarker = getTypeMarker(value);
+            
+
+            if (!getTypeMarker(value).Equals("unknown"))
+            {
+                BsonDocument serializedObj = new BsonDocument(new BsonElement("value_type", typeMarker));
+
+                switch (typeMarker)
+                {
+                    case "int":
+                    case "int32":
+                    case "float":
+                    case "string":
+                        return serializedObj.Add(new BsonElement("value", BsonTypeMapper.MapToBsonValue(value)));
+
+                    case "list":
+                        List<BsonDocument> serializedList = new List<BsonDocument>();
+                        List<object> list = (List<object>) value;
+                        foreach (object item in list)
+                        {
+                            serializedList.Add(Serialize(item));
+                        }
+                        return serializedObj.Add(new BsonElement("value", BsonTypeMapper.MapToBsonValue(serializedList)));
+
+                    case "dict":
+                        Dictionary<string, BsonDocument> serializedDict = new Dictionary<string, BsonDocument>();
+                        Dictionary<string, object> dictionary = (Dictionary<string, object>) value;
+                        foreach (KeyValuePair<string, object> entry in dictionary)
+                        {
+                            serializedDict.Add(entry.Key, Serialize(entry.Value));
+                        }
+                        return serializedObj.Add(new BsonElement("value", BsonTypeMapper.MapToBsonValue(serializedDict)));
+
+                    default: return null;
+                }
+            }   
+            BsonDocument doc = (BsonDocument) value;
+            return doc;
+        }
+
+        public static object Deserialize(BsonDocument serializedValue) 
+        {
+            string valueType = serializedValue.GetValue("value_type").AsString;
+
+            BsonValue value = serializedValue.GetValue("value");
+
+            switch (valueType)
+            {
+                case "int":
+                case "int32": 
+                    return value.AsInt32;
+
+                case "float":
+                case "float64": 
+                    return value.AsDouble;
+
+                case "string": 
+                    return value.AsString;
+
+                case "list":
+                case "tuple":
+                case "array":
+                    List<object> deserializedList = new List<object>();
+                    BsonArray arr = value.AsBsonArray;
+                    foreach (object elem in arr)
+                    {
+                        BsonDocument doc = elem.ToBsonDocument();
+                        deserializedList.Add(Deserialize(doc));
+                    }
+                    return deserializedList;
+
+                case "dict":
+                    Dictionary<string, object> deserializedDict = new Dictionary<string, object>();
+                    BsonDocument serialized = value.ToBsonDocument();
+                    foreach (BsonElement elem in serialized)
+                    {
+                        string name = elem.Name;
+                        BsonDocument v = elem.Value.ToBsonDocument();
+                        deserializedDict.Add(name, Deserialize(v));
+                    }
+                    return deserializedDict;
+
                 default:
-                    typed_request = r;
-                    break;
-            };
-
-            typed_request.__handler = handler;
-            return typed_request;
+                    Console.WriteLine("Cannot deserialize given object");
+                    return null;
+            }
         }
+
     }
 
-    public class HandshakeRequest : Request
+    public class Sydx
     {
-        public String host { get; set; }
-        public int pid { get; set; }
-        public int local_port { get; set; }
-        public override void process(Storage storage, Connections connections)
+        private static int? serverPort;
+        private Server server;
+        private Storage storage;
+        private Connections connections;
+
+        public Sydx(Storage storage, Connections connections)
         {
-            string handle = Guid.NewGuid().ToString();
+            this.storage = storage;
+            this.connections = connections;
+        }
 
-            // TODO: create a Connection object and add it to Connections
+        public Client _connect(string host, int port)
+        {
+            Client client = new Client(host, port, (int)serverPort, storage);
+            client.Connect();
+            return client;
+        }
 
-            // Build response
-            string response_type = "HANDSHAKE_RESPONSE";
-            string connection_handle = handle;
-            var response = new { response_type, connection_handle };
-            var json = JsonConvert.SerializeObject(response);
+        public string Connect(string host, int port)
+        {
+            if (serverPort is null)
+            {
+                Console.WriteLine("Must open port before connecting");
+                return null;
+            } else
+            {
+                Client client = _connect(host, port);
+                //connections.Add(client.Handle(),
+                //new Connection(host, client.Pid(), port, System.DateTime.Now.ToString("dddd , MMM dd yyyy,hh:mm:ss"), client));
+                return client.Handle();
+            }
+        }
 
-            // TODO: return json to Python somehow
+        public bool Port(int port)
+        {
+            if(serverPort is null)
+            {
+                serverPort = port;
+                this.server = new Server("", port, storage, connections);
+
+                Thread t = new Thread(server.run);
+                t.Start();
+                return true;
+            } else
+            {
+                Console.WriteLine("Server port already open");
+                return false;
+            }
+        }
+
+        public void Port(string host, int port)
+        {
+            if (serverPort is null)
+            {
+                serverPort = port;
+                server = new Server(host, port, storage, connections);
+
+                Thread t = new Thread(server.run);
+                t.Start();
+            }
+            else
+            {
+                Console.WriteLine("Server port already open");
+            }
+        }
+
+        public void ClosePort()
+        {
+            if(serverPort is null)
+            {
+                Console.WriteLine("Server port is null");
+            } else
+            {
+                server.stop();
+                Console.WriteLine("Closed server port");
+            }
+        }
+
+        public void Put(string name, object value)
+        {
+            string type = Converters.getTypeMarker(value);
+
+            BsonDocument valueAndType = Converters.Serialize(value);
+            BsonDocument putRequest = new BsonDocument(new BsonElement("request_type", "PUT_REQUEST")).
+                                                   Add(new BsonElement("name", name)).
+                                                   Add(new BsonElement("value", valueAndType));
+            storage.Put(name, valueAndType);
+            connections.SendToAll(putRequest, this);
+        }
+
+        public object Get(string name)
+        {
+            return storage.Get(name);
         }
     }
-
-    public class SyncStorageRequest : Request
-    {
-        public String storage_snapshot { get; set; }
-        public override void process(Storage storage, Connections connections)
-        {
-            //TODO
-            throw new NotImplementedException();
-        }
-    }
-
-    public class PutRequest : Request
-    {
-        public String name { get; set; }
-        public Object value { get; set; }
-        public override void process(Storage storage, Connections connections)
-        {
-            //TODO
-            throw new NotImplementedException();
-        }
-    }
-
-    public class IncomingDataRequest : Request
-    {
-        public String function_name { get; set; }
-        public Object data { get; set; }
-        public override void process(Storage storage, Connections connections)
-        {
-            //TODO
-            throw new NotImplementedException();
-        }
-    }
-
-
 
     public static class ExcelFunctions
     {
+        private static Sydx sydx;
         private static readonly Storage storage = new Storage();
+        private static Connections connections = new Connections();
 
         private static Boolean portOpen = false;
 
@@ -361,18 +831,31 @@ namespace Sydx
         public static string S_Port(
             [ExcelArgument(Name = "port", Description = "port number, e.g. 4782")] int port)
         {
-            if (!portOpen)
+            // if (!portOpen)
+            // {
+            //     ServerSydx server = new ServerSydx(port, storage);
+            //     Thread serverThread = new Thread(server.Run);
+            //     serverThread.Start();
+            //     portOpen = true;
+            //     return "`success";
+            // }
+            // else
+            // {
+            //     return "`failure(reason='port already open')";
+            // }
+            if (sydx is null)
             {
-                Server server = new Server(port, storage);
-                Thread serverThread = new Thread(server.Run);
-                serverThread.Start();
-                portOpen = true;
-                return "`success";
+                sydx = new Sydx(storage, connections);
+                bool isPortOpen = sydx.Port(port);
+                return "`success";   
             }
-            else
-            {
-                return "`failure(reason='port already open')";
-            }
+            return "`failure(reason='port already open')";
+        } 
+
+        public static string S_Connect([ExcelArgument(Name = "host", Description = "Host to conenct to")] string host, 
+            [ExcelArgument(Name = "port", Description = "Port to connect to")] int port)
+        {
+            return sydx.Connect(host, port);
         }
 
         [ExcelFunction(Description = "Returns the version of the Integral AddIn as a string, e.g. 1.0.0")]
@@ -384,14 +867,14 @@ namespace Sydx
         [ExcelFunction(Description = "Puts an object into the Integral dictionary")]
         public static string S_Put(string name, object value)
         {
-            storage.Put(name, value);
+            sydx.Put(name, value);
             return "`" + name + "(type=" + value.GetType().ToString() + ")";
         }
 
         [ExcelFunction(Description = "Gets an object from the Integral dictionary")]
         public static object S_Get(string name, object value)
         {
-            return storage.Get(name);
+            return sydx.Get(name);
         }
 
         [ExcelFunction(Description = "Greets the user by name")]
@@ -427,19 +910,6 @@ namespace Sydx
                 return "<<Empty>>"; // Would have been null
             else
                 return "!? Unheard Of ?!";
-        }
-
-        [ExcelFunction(Description = "Applies Simplex algorithm to selected range.")]
-        public static string S_Simplex([ExcelArgument(Description = "All constraint function coefficients. G symbolizes greater than sign and L for lesser than sign")]object constraints, 
-                                        [ExcelArgument(Description = "Objective function coefficients")]object objective, 
-                                        [ExcelArgument(Description = "Enter max to find maximum of objective function and min to find minimum")]String funcType)
-        {
-            // String[] constraints_str = convert_arr_to_string(constraints);
-            // String objective_str = convert_arr_to_string(objective)[0];
-
-            Double answer = 0;
-
-            return answer.ToString();
         }
     }
 }
