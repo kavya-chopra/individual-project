@@ -11,6 +11,7 @@ import socket
 import string
 import threading
 import uuid
+import datetime
 
 from bson import BSON
 
@@ -325,6 +326,7 @@ def port(port):
 def _connect(host, port):
     client = Client(host, port, __server_port, __storage)
     client.connect()
+    # __connections.add(client.handle, Connection(host, os.getpid(), port, datetime.datetime.now(), client))
     return client
 
 def connect(host, port):
