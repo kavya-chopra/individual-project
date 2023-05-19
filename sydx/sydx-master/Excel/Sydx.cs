@@ -21,125 +21,125 @@ using System.Runtime.CompilerServices;
 
 namespace Sydx
 {
-    public class ServerSydx
-    {
-        public class StateObject
-        {
-            // Client socket
-            public Socket workSocket = null;
-            // Size of receive buffer
-            public const int BufferSize = 1024;
-            // Receive buffer
-            public byte[] buffer = new byte[BufferSize];
-            // Received data string
-            public StringBuilder sb = new StringBuilder();
-        }
+    //public class ServerSydx
+    //{
+    //    public class StateObject
+    //    {
+    //        // Client socket
+    //        public Socket workSocket = null;
+    //        // Size of receive buffer
+    //        public const int BufferSize = 1024;
+    //        // Receive buffer
+    //        public byte[] buffer = new byte[BufferSize];
+    //        // Received data string
+    //        public StringBuilder sb = new StringBuilder();
+    //    }
 
-        private int port;
+    //    private int port;
 
-        private Storage storage;
+    //    private Storage storage;
 
-        private ManualResetEvent allDone = new ManualResetEvent(false);
+    //    private ManualResetEvent allDone = new ManualResetEvent(false);
 
-        public ServerSydx(int port, Storage storage)
-        {
-            this.port = port;
-            this.storage = storage;
-        }
+    //    public ServerSydx(int port, Storage storage)
+    //    {
+    //        this.port = port;
+    //        this.storage = storage;
+    //    }
 
-        public void Run()
-        {
-            Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            EndPoint localEndPoint = new IPEndPoint(IPAddress.Any, this.port);
-            socket.Bind(localEndPoint);
-            socket.Listen(100);
-            while (true)
-            {
-                // Set the event to nonsignaled state
-                allDone.Reset();
+    //    public void Run()
+    //    {
+    //        Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+    //        EndPoint localEndPoint = new IPEndPoint(IPAddress.Any, this.port);
+    //        socket.Bind(localEndPoint);
+    //        socket.Listen(100);
+    //        while (true)
+    //        {
+    //            // Set the event to nonsignaled state
+    //            allDone.Reset();
 
-                socket.BeginAccept(new AsyncCallback(AcceptCallback), socket);
+    //            socket.BeginAccept(new AsyncCallback(AcceptCallback), socket);
 
-                // Wait until a connection is made before continuing
-                allDone.WaitOne();
-            }
-        }
+    //            // Wait until a connection is made before continuing
+    //            allDone.WaitOne();
+    //        }
+    //    }
 
-        public void AcceptCallback(IAsyncResult ar)
-        {
-            // Signal the thread to continue
-            allDone.Set();
+    //    public void AcceptCallback(IAsyncResult ar)
+    //    {
+    //        // Signal the thread to continue
+    //        allDone.Set();
 
-            Socket socket = (Socket)ar.AsyncState;
-            Socket handler = socket.EndAccept(ar);
+    //        Socket socket = (Socket)ar.AsyncState;
+    //        Socket handler = socket.EndAccept(ar);
 
-            this.storage.Put("connected", 357.0);
+    //        this.storage.Put("connected", 357.0);
 
-            StateObject state = new StateObject();
-            state.workSocket = handler;
-            handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), state);
-        }
+    //        StateObject state = new StateObject();
+    //        state.workSocket = handler;
+    //        handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+    //            new AsyncCallback(ReadCallback), state);
+    //    }
 
-        public void ReadCallback(IAsyncResult ar)
-        {
-            String content = String.Empty;
+    //    public void ReadCallback(IAsyncResult ar)
+    //    {
+    //        String content = String.Empty;
 
-            StateObject state = (StateObject)ar.AsyncState;
-            Socket handler = state.workSocket;
+    //        StateObject state = (StateObject)ar.AsyncState;
+    //        Socket handler = state.workSocket;
 
-            int bytesRead = handler.EndReceive(ar);
+    //        int bytesRead = handler.EndReceive(ar);
 
-            if (bytesRead > 0)
-            {
-                // There might be more data, so store the data received so far
-                state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
+    //        if (bytesRead > 0)
+    //        {
+    //            // There might be more data, so store the data received so far
+    //            state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
 
-                // Check for end-of-file tag. If it is not there, read more data
-                content = state.sb.ToString();
+    //            // Check for end-of-file tag. If it is not there, read more data
+    //            content = state.sb.ToString();
 
-                if (content.IndexOf("<EOF>") > -1)
-                {
-                    // All the data has been read from the client
-                    this.storage.Put("message", content);
+    //            if (content.IndexOf("<EOF>") > -1)
+    //            {
+    //                // All the data has been read from the client
+    //                this.storage.Put("message", content);
 
-                    Send(handler, "Thank you.");
-                }
-                else
-                {
-                    // Not all data received. Get more
-                    handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReadCallback), state);
-                }
-            }
-        }
+    //                Send(handler, "Thank you.");
+    //            }
+    //            else
+    //            {
+    //                // Not all data received. Get more
+    //                handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+    //                    new AsyncCallback(ReadCallback), state);
+    //            }
+    //        }
+    //    }
 
-        private void Send(Socket handler, String data)
-        {
-            byte[] byteData = Encoding.ASCII.GetBytes(data);
+    //    private void Send(Socket handler, String data)
+    //    {
+    //        byte[] byteData = Encoding.ASCII.GetBytes(data);
 
-            handler.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), handler);
-        }
+    //        handler.BeginSend(byteData, 0, byteData.Length, 0, new AsyncCallback(SendCallback), handler);
+    //    }
 
-        private void SendCallback(IAsyncResult ar)
-        {
-            try
-            {
-                // Retrieve the socket from the state object
-                Socket handler = (Socket)ar.AsyncState;
+    //    private void SendCallback(IAsyncResult ar)
+    //    {
+    //        try
+    //        {
+    //            // Retrieve the socket from the state object
+    //            Socket handler = (Socket)ar.AsyncState;
 
-                // Complete sending the data to the remote device
-                int bytesSent = handler.EndSend(ar);
+    //            // Complete sending the data to the remote device
+    //            int bytesSent = handler.EndSend(ar);
 
-                handler.Shutdown(SocketShutdown.Both);
-                handler.Close();
-            }
-            catch (Exception e)
-            {
-                // TODO Log exception
-            }
-        }
-    }
+    //            handler.Shutdown(SocketShutdown.Both);
+    //            handler.Close();
+    //        }
+    //        catch (Exception e)
+    //        {
+    //            // TODO Log exception
+    //        }
+    //    }
+    //}
 
     public class Server
     {
@@ -177,7 +177,7 @@ namespace Sydx
             server.Stop();
         }
 
-        public void stop()
+        public void Stop()
         {
             this.mainThreadIsRunning = false;
         }
@@ -202,7 +202,7 @@ namespace Sydx
             }
         }
 
-        public void run()
+        public void Run()
         {
             this.listen();
         }
@@ -322,7 +322,7 @@ namespace Sydx
 
                 if (connection.Client() is null)
                 {
-                    connection.setClient(sydx._connect(connection.Host(), connection.LocalPort()));
+                    connection.setClient(sydx.ConnectClient(connection.Host(), connection.LocalPort()));
                 }
                 BsonDocument response = connection.Client().SendRequest(request);
                 Console.WriteLine(response.AsString);
@@ -734,7 +734,7 @@ namespace Sydx
             this.connections = connections;
         }
 
-        public Client _connect(string host, int port)
+        public Client ConnectClient(string host, int port)
         {
             Client client = new Client(host, port, (int)serverPort, storage);
             client.Connect();
@@ -749,9 +749,9 @@ namespace Sydx
                 return null;
             } else
             {
-                Client client = _connect(host, port);
-                //connections.Add(client.Handle(),
-                //new Connection(host, client.Pid(), port, System.DateTime.Now.ToString("dddd , MMM dd yyyy,hh:mm:ss"), client));
+                Client client = ConnectClient(host, port);
+                connections.Add(client.Handle(),
+                    new Connection(host, client.Pid(), port, System.DateTime.Now.ToString("dddd , MMM dd yyyy,hh:mm:ss"), client));
                 return client.Handle();
             }
         }
@@ -761,9 +761,9 @@ namespace Sydx
             if(serverPort is null)
             {
                 serverPort = port;
-                this.server = new Server("", port, storage, connections);
+                this.server = new Server("localhost", port, storage, connections);
 
-                Thread t = new Thread(server.run);
+                Thread t = new Thread(server.Run);
                 t.Start();
                 return true;
             } else
@@ -780,7 +780,7 @@ namespace Sydx
                 serverPort = port;
                 server = new Server(host, port, storage, connections);
 
-                Thread t = new Thread(server.run);
+                Thread t = new Thread(server.Run);
                 t.Start();
             }
             else
@@ -796,7 +796,7 @@ namespace Sydx
                 Console.WriteLine("Server port is null");
             } else
             {
-                server.stop();
+                server.Stop();
                 Console.WriteLine("Closed server port");
             }
         }
@@ -831,18 +831,6 @@ namespace Sydx
         public static string S_Port(
             [ExcelArgument(Name = "port", Description = "port number, e.g. 4782")] int port)
         {
-            // if (!portOpen)
-            // {
-            //     ServerSydx server = new ServerSydx(port, storage);
-            //     Thread serverThread = new Thread(server.Run);
-            //     serverThread.Start();
-            //     portOpen = true;
-            //     return "`success";
-            // }
-            // else
-            // {
-            //     return "`failure(reason='port already open')";
-            // }
             if (sydx is null)
             {
                 sydx = new Sydx(storage, connections);
@@ -892,8 +880,8 @@ namespace Sydx
         [ExcelFunction(Description = "Describes the value passed to the function")]
         public static string S_Describe(object arg)
         {
-            if (arg is double)
-                return "Double: " + (double)arg;
+            if (arg is double @double)
+                return "Double: " + @double;
             else if (arg is string)
                 return "String: " + (string)arg;
             else if (arg is bool)
