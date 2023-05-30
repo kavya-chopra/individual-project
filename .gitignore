@@ -4,7 +4,11 @@
 out/
 target/
 /shelf/
-sydx/shelf
-sydx/sydx-master/Python/src/main/__pycache__
-sydx/sydx-master/.vs/
-sydx/sydx-master/env/
+zend/shelf
+zend/zend-master/Python/src/main/__pycache__
+zend/zend-master/.vs
+zend/zend-master/env
+zend/zend-master/Excel/zend-ts/.vscode
+zend/zend-master/Excel/zend-ts/dist
+zend/zend-master/Excel/zend-ts/node_modules
+
