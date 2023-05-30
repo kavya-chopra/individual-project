@@ -1,0 +1,144 @@
+{
+    "functions": [
+        {
+            "description": "Adds two numbers.",
+            "id": "ADD",
+            "name": "ADD",
+            "parameters": [
+                {
+                    "description": "First number",
+                    "name": "first",
+                    "type": "number"
+                },
+                {
+                    "description": "Second number",
+                    "name": "second",
+                    "type": "number"
+                }
+            ],
+            "result": {
+                "type": "number"
+            }
+        },
+        {
+            "description": "Displays the current time once a second.",
+            "id": "CLOCK",
+            "name": "CLOCK",
+            "options": {
+                "stream": true
+            },
+            "parameters": [],
+            "result": {
+                "type": "string"
+            }
+        },
+        {
+            "description": "Increments a value once a second.",
+            "id": "INCREMENT",
+            "name": "INCREMENT",
+            "options": {
+                "stream": true
+            },
+            "parameters": [
+                {
+                    "description": "Amount to increment",
+                    "name": "incrementBy",
+                    "type": "number"
+                }
+            ],
+            "result": {
+                "type": "number"
+            }
+        },
+        {
+            "description": "Writes a message to console.log().",
+            "id": "LOG",
+            "name": "LOG",
+            "parameters": [
+                {
+                    "description": "String to write.",
+                    "name": "message",
+                    "type": "string"
+                }
+            ],
+            "result": {
+                "type": "string"
+            }
+        },
+        {
+            "description": "Puts a value into global storage and sends value to other frameworks.",
+            "id": "PUT",
+            "name": "PUT",
+            "parameters": [
+                {
+                    "description": "the key for value.",
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "description": "the value to put in storage.",
+                    "name": "value",
+                    "type": "any"
+                }
+            ],
+            "result": {
+                "type": "string"
+            }
+        },
+        {
+            "description": "Gets a value from the global storage.",
+            "id": "GET",
+            "name": "GET",
+            "parameters": [
+                {
+                    "description": "the key to get the value of from storage.",
+                    "name": "name",
+                    "type": "string"
+                }
+            ],
+            "result": {}
+        },
+        {
+            "description": "Opens a server port for incoming connections from other frameworks.",
+            "id": "OPEN_PORT",
+            "name": "OPEN_PORT",
+            "parameters": [
+                {
+                    "description": "port number to open server on and listen for connections",
+                    "name": "port",
+                    "type": "number"
+                },
+                {
+                    "description": "host name for server; default is localhost",
+                    "name": "host",
+                    "optional": true,
+                    "type": "string"
+                }
+            ],
+            "result": {
+                "type": "string"
+            }
+        },
+        {
+            "description": "Connects to a server at given port and hostname for communication.",
+            "id": "CONNECT",
+            "name": "CONNECT",
+            "parameters": [
+                {
+                    "description": "host name to connect to; default is localhost",
+                    "name": "host",
+                    "optional": true,
+                    "type": "string"
+                },
+                {
+                    "description": "port number to connect to",
+                    "name": "port",
+                    "type": "number"
+                }
+            ],
+            "result": {
+                "type": "string"
+            }
+        }
+    ]
+}
