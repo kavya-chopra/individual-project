@@ -35,7 +35,7 @@ def __numpy_array_to_list(arr):
         if isinstance(x, np.ndarray):
             result.append(__numpy_array_to_list(x))
         else:
-            result.append(sydx.__serialise(x))
+            result.append(zend.__serialise(x))
     return result
 
 def __list_to_numpy_array(lst):
@@ -44,7 +44,7 @@ def __list_to_numpy_array(lst):
         if isinstance(x, list):
             result.append(__list_to_numpy_array(x))
         else:
-            result.append(sydx.__deserialise(x))
+            result.append(zend.__deserialise(x))
     return np.array(result)
 
 def numpy_array_to_json_object(obj):
@@ -84,7 +84,7 @@ def plain_old_data_to_json_object(obj):
     elif isinstance(obj, list):
         return {
             'value_type': 'list',
-            'value': [sydx.__serialise(x) for x in obj]
+            'value': [zend.__serialise(x) for x in obj]
         }
     # if isinstance(obj, (int, float, complex)):
     #     return obj

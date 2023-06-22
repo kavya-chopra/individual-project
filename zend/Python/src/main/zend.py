@@ -12,8 +12,9 @@ import string
 import threading
 import uuid
 import datetime
+import duallog
+import bson
 
-from bson import BSON
 
 class ZendException(Exception):
     pass
@@ -189,23 +190,33 @@ class Server(object):
     #         message += chunk.decode('utf-8')
     #         if message.find('\n') != -1: break
     #     return message
-            
+
     def listenToClient(self, client, address):
-        request_length = int.from_bytes(client.recv(4), byteorder='big')
-        print("data length: ", request_length)
-        foo = client.recv(request_length)
-        # print(f"received: {foo}")
-        request = BSON.decode(foo)
-        print ("Received request: ", request)
-        # request = self.receive_line(client)
-        # request = request.rstrip()
-        response = self.__interpreter.interpret(request)
-        # response = response.rstrip() + '\n'
-        print ("Sending response: ", response)
-        bson_data = BSON.encode(response)
-        client.sendall(len(bson_data).to_bytes(4, 'big'))
-        client.sendall(bson_data)
-        # client.send(response.encode())
+        client.settimeout(5)  # Set a timeout for socket operations
+        try:
+            while True:
+                logger = logging.getLogger()
+                request_length = int.from_bytes(recvall(client, 4), byteorder='big')
+                logger.debug(f"data length: {request_length}")
+                foo = recvall(client, request_length)
+                # print(f"received: {foo}")
+                request = bson.decode(foo)
+                logger.debug(f"Received request: {str(request)}")
+                # request = self.receive_line(client)
+                # request = request.rstrip()
+                response = self.__interpreter.interpret(request)
+                # response = response.rstrip() + '\n'
+                logger.debug(f"Sending response: {str(response)}")
+                bson_data = bson.encode(response)
+                client.sendall(len(bson_data).to_bytes(4, 'big'))
+                client.sendall(bson_data)
+                # client.send(response.encode())
+        except socket.timeout:
+           print('Socket timeout')
+        except Exception as e:
+           print(f'Socket error: {e}')
+        finally:
+           client.close()
 
 class Client(object):
     def __init__(self, host, port, local_port, storage):
@@ -241,14 +252,14 @@ class Client(object):
 
         logger.debug('Sending request: %s' % request)
         #logger.debug('Sending request: %s' % request_json)
-        bson_data = BSON.encode(request)
+        bson_data = bson.encode(request)
         self.__socket.sendall(len(bson_data).to_bytes(4, 'big'))
         self.__socket.sendall(bson_data)
         # self.__socket.send((request_json + '\n').encode())
         logger.debug('Receiving response')
-        response_length = int.from_bytes(self.__socket.recv(4), byteorder='big')
+        response_length = int.from_bytes(recvall(self.__socket, 4), byteorder='big')
         logger.debug('data length: %s' % response_length)
-        response_json = BSON.decode(self.__socket.recv(response_length))
+        response_json = bson.decode(recvall(self.__socket, response_length))
         # response_json = self.receive_line(self.__socket)
         logger.debug('Received response: %s' % response_json)
         # response = json.loads(response_json)
@@ -272,13 +283,24 @@ class Client(object):
         their_storage_snapshot = response['storage_snapshot']
         self.__storage.put_all(their_storage_snapshot)
 
+
+def recvall(sock: socket.socket, n: int):
+    data = bytearray()
+    while len(data) < n:
+        packet = sock.recv(n - len(data))
+        if not packet:
+            return None
+        data.extend(packet)
+    return data
+            
+
 __version__ = '1.0.0'
 
 def __init_logging():
     module_dir = os.path.dirname(os.path.abspath(__file__))
     logging_config_file_name = 'zend-logging.cfg'
     default_config_file_path = os.path.join(module_dir, logging_config_file_name)
-    config_file_path = os.getenv('SYDX_PYTHON_LOGGING_CONFIG', default_config_file_path)
+    config_file_path = os.getenv('ZEND_PYTHON_LOGGING_CONFIG', default_config_file_path)
     if not os.path.exists(config_file_path):
         config_file_path = os.path.join(module_dir, '..', '..', 'config', logging_config_file_name)
     if os.path.exists(config_file_path):
@@ -287,7 +309,7 @@ def __init_logging():
         logging.basicConfig()
 
 def __load_converters():
-    module_names = os.getenv('SYDX_PYTHON_CONVERTER_MODULES', 'converters').split(',')
+    module_names = os.getenv('ZEND_PYTHON_CONVERTER_MODULES', 'converters').split(',')
     all_from_json_object_converters, all_to_json_object_converters = [], []
     for module_name in module_names:
         module = importlib.import_module(module_name)
