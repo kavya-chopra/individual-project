@@ -1,0 +1,12 @@
+
+# dist folders & dependencies
+dist/
+dist-proxy/
+node_modules/
+
+# editor stuff
+.vscode/
+
+# ssl keys
+ssl/
+

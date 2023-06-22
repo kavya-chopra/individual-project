@@ -12,5 +12,8 @@ zend/Excel/zend-ts/.vscode
 zend/Excel/zend-ts/dist
 zend/Excel/zend-ts/node_modules
 zend/Python/env
+zend/Python/NOT_SYDX.py
+zend/Excel/zend-add-in-ts/client.c
+zend/Excel/zend-add-in-vsto/packages/Newtonsoft.JSON.13.0.3
 
 node_modules
