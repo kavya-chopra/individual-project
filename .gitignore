@@ -1,14 +1,16 @@
 # Default ignored files
 .idea/
-.vs/
+.vs
 out/
 target/
 /shelf/
 zend/shelf
-zend/zend-master/Python/src/main/__pycache__
-zend/zend-master/.vs
-zend/zend-master/env
-zend/zend-master/Excel/zend-ts/.vscode
-zend/zend-master/Excel/zend-ts/dist
-zend/zend-master/Excel/zend-ts/node_modules
+zend/Python/src/main/__pycache__
+zend/.vs
+zend/env
+zend/Excel/zend-ts/.vscode
+zend/Excel/zend-ts/dist
+zend/Excel/zend-ts/node_modules
+zend/Python/env
+
 node_modules

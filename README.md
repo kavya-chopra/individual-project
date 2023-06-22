@@ -1,13 +1,19 @@
 # individual-project
 Computing BEng Individual Project of 2023 - Imperial College London
 
-To connect local Excel to given add-in:
-- Open Excel and shortcut Alt+T+I
-- Browse for relevant xll file in Excel/bin/Debug directory (Excel-AddIn.xll)
-- Choose add-in file and click "Okay"
+How to use the Library:
 
-To use AddIn in Excel:
-- Click on cell
-- Click "fx" button and choose relevant add-in
-- Choose function required and input relevant arguments in pop-up
-- Enter
+Step 1: start the proxy
+- open command line and cd to zend-add-in-ts directory
+- run 'npm run start:proxy'
+
+Step 2: Connect the Add-in
+- run 'npm run start:desktop'
+
+
+Excel Custom Functions:
+
+1. ZEND.OPEN_PORT(<port_number>) : opens a TCP port on the given port number for communication with other components
+2. ZEND.PUT(<key>, <excel_range>) : adds a key-value pair to storage. The key must be a "string" value. The Excel range can be a value in a single cell or in a range.
+3. ZEND.GET(<key>) : retrieves the value associated to the "string" key and prints it row-wise. If you wish to print the associated value column-wise, then use the function as ZEND.GET(<key>, TRUE).
+
