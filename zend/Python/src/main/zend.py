@@ -15,6 +15,7 @@ import datetime
 import duallog
 import bson
 
+from typing import Dict
 
 class ZendException(Exception):
     pass
@@ -54,11 +55,12 @@ class Connection(object):
 class Connections(object):
     def __init__(self):
         self.__lock = threading.Lock()
-        self.__connections = {}
+        self.__connections: Dict[str, Connection] = {}
 
-    def add(self, handle, connection):
+    def add_if_absent(self, handle, connection):
         with self.__lock:
-            self.__connections[handle] = connection
+            if handle not in self.__connections:
+                self.__connections[handle] = connection
 
     def send_to_all(self, request):
         with self.__lock:
@@ -66,6 +68,17 @@ class Connections(object):
                 if connection.client is None:
                     connection.client = _connect(connection.host, connection.local_port)
                 connection.client.send_request(request)
+
+    def find_connection(self, host, port):
+        with self.__lock:
+            for handle, connection in self.__connections.items():
+                if connection.host == host and connection.local_port == port:
+                    return handle
+            return None
+        
+    def get_connection(self, handle):
+        with self._lock:
+            self.__connections[handle]
 
 class Storage(object):
     def __init__(self):
@@ -127,11 +140,13 @@ class Interpreter(object):
         request_obj = request_json
         # request_obj = json.loads(request_json)
         if request_obj['request_type'] == 'HANDSHAKE_REQUEST':
-            handle = str(uuid.uuid1())
+            handle = self.__connections.find_connection(request_obj['host'], request_obj['local_port'])
+            if handle is None:
+                handle = str(uuid.uuid1())
             host = request_obj['host']
             pid = request_obj['pid']
             local_port = request_obj['local_port']
-            self.__connections.add(handle, Connection(host, pid, local_port, dt.datetime.utcnow(), client=None))
+            self.__connections.add_if_absent(handle, Connection(host, pid, local_port, dt.datetime.utcnow(), client=None))
             response_obj = {
                 'response_type': 'HANDSHAKE_RESPONSE',
                 'connection_handle': handle
@@ -192,10 +207,10 @@ class Server(object):
     #     return message
 
     def listenToClient(self, client, address):
+        logger = logging.getLogger()
         client.settimeout(5)  # Set a timeout for socket operations
         try:
             while True:
-                logger = logging.getLogger()
                 request_length = int.from_bytes(recvall(client, 4), byteorder='big')
                 logger.debug(f"data length: {request_length}")
                 foo = recvall(client, request_length)
@@ -212,9 +227,9 @@ class Server(object):
                 client.sendall(bson_data)
                 # client.send(response.encode())
         except socket.timeout:
-           print('Socket timeout')
+           logger.debug('Socket timeout')
         except Exception as e:
-           print(f'Socket error: {e}')
+           logger.debug(f'Socket error: {e}')
         finally:
            client.close()
 
@@ -349,9 +364,19 @@ def open_port(port):
     __server_port = port
 
 def _connect(host, port):
-    client = Client(host, port, __server_port, __storage)
-    client.connect()
-    __connections.add(client.handle, Connection(host, os.getpid(), port, datetime.datetime.now(), client))
+    def create_and_connect_client():
+        new_client = Client(host, port, __server_port, __storage)
+        new_client.connect()
+        return new_client
+
+    handle = __connections.find_connection(host, port)
+    if handle is None:
+        client = create_and_connect_client()
+        __connections.add_if_absent(client.handle, Connection(host, os.getpid(), port, datetime.datetime.now(), client))
+    else:
+        connection = __connections.get_connection(handle)
+        client = connection.client if connection.client is not None else create_and_connect_client()
+
     return client
 
 def connect(host, port):

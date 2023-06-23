@@ -9,8 +9,24 @@ export class Connections {
     this.connections = new Map<string, Connection>();
   }
 
-  add(handle: string, connection: Connection): void {
+  addIfAbsent(handle: string, connection: Connection): void {
+    if (this.connections.has(handle)) return;
     this.connections.set(handle, connection);
+  }
+
+  findConnection(host: string, port: number): string {
+    for (const entry of Array.from(this.connections.entries())) {
+      const handle = entry[0];
+      const connection = entry[1];
+      if (connection.host == host && connection.localPort == port) {
+        return handle;
+      }
+    }
+    return null;
+  }
+
+  getConnection(handle: string): Connection {
+    return this.connections.get(handle);
   }
 
   async sendToAll(request: ZendRequest): Promise<void> {

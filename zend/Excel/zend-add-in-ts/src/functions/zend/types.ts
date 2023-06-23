@@ -15,7 +15,7 @@ export type PutRequest = {
 
 export type SyncStorageRequest = {
   request_type: "SYNC_STORAGE_REQUEST";
-  storage: ZendMap;
+  storage_snapshot: ZendMap;
 };
 
 export type ZendRequest = HandshakeRequest | PutRequest | SyncStorageRequest;

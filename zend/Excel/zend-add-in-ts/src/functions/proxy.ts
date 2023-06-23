@@ -27,7 +27,7 @@ async function startWsServer(wsServerPort: number, host: string = "127.0.0.1") {
     ws.binaryType = "arraybuffer";
     ws.on("message", async (message) => {
       try {
-        console.log(`received message: ${message}`)
+        console.log(`received message: ${message}`);
         if (message instanceof ArrayBuffer) {
           const deserialized = BSON.deserialize(new Uint8Array(message)) as ZendExcelRequest;
           console.log(`deserialized message: ${JSON.stringify(deserialized)}`);
@@ -42,7 +42,7 @@ async function startWsServer(wsServerPort: number, host: string = "127.0.0.1") {
           }
 
           ws.send(BSON.serialize(response));
-          console.log(`sent response: ${JSON.stringify(response)}`)
+          console.log(`sent response: ${JSON.stringify(response)}`);
         }
       } catch (e) {
         console.error(e);
@@ -93,11 +93,27 @@ startWsServer(8080);
 
 // Global function; not an Excel function
 export async function _connect(host: string, localPort: number): Promise<ZendClient> {
-  let client: ZendClient = new ZendClient(host, localPort, serverPort);
-  await client.connect();
-  await client.syncStorage(storage);
-  connections.add(client.getHandle(), new Connection(host, client.getPid(), localPort, new Date(), client));
-  return client;
+  const createAndConnectClient = async () => {
+    const client: ZendClient = new ZendClient(host, localPort, serverPort);
+    await client.connect();
+    await client.syncStorage(storage);
+    return client;
+  };
+
+  const handle = connections.findConnection(host, localPort);
+  if (handle === null) {
+    const client = await createAndConnectClient();
+    connections.addIfAbsent(client.getHandle(), new Connection(host, client.getPid(), localPort, new Date(), client));
+    return client;
+  } else {
+    const connection = connections.getConnection(handle);
+    const client = connection.client !== null ? connection.client : createAndConnectClient();
+    return client;
+  }
+}
+
+export async function _syncStorage(client: ZendClient) {
+  return client.syncStorage(storage);
 }
 
 // function sendData(data: object) {

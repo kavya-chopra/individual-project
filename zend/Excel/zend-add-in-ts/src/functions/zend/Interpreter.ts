@@ -22,8 +22,11 @@ import WebSocket from "ws";
 export function processRequestFromExternal(request: ZendRequest, storage: Storage, connections: Connections, ws: WebSocket.WebSocket): ZendResponse {
   
   if (request.request_type === "HANDSHAKE_REQUEST") {
-    let handle = uuidv4();
-    connections.add(handle, new Connection(request.host, request.pid, request.local_port, new Date(), null));
+    let handle = connections.findConnection(request.host, request.local_port);
+    if (handle === null) {
+      handle = uuidv4();
+    }
+    connections.addIfAbsent(handle, new Connection(request.host, request.pid, request.local_port, new Date(), null));
     return { response_type: "HANDSHAKE_RESPONSE", connection_handle: handle } as HandshakeResponse;
 
   } else if (request.request_type === "PUT_REQUEST") {
@@ -31,7 +34,7 @@ export function processRequestFromExternal(request: ZendRequest, storage: Storag
     return { response_type: "PUT_RESPONSE", result: "success" } as PutResponse;
 
   } else if (request.request_type === "SYNC_STORAGE_REQUEST") {
-    storage.putAllSerialized(request.storage);
+    storage.putAllSerialized(request.storage_snapshot);
     return { response_type: "SYNC_STORAGE_RESPONSE", storage_snapshot: storage.getAllSerialized() } as SyncStorageResponse;
     
   } else {
