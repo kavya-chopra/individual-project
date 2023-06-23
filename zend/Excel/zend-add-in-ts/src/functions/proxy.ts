@@ -36,6 +36,7 @@ async function startWsServer(wsServerPort: number, host: string = "127.0.0.1") {
           if (deserialized.request_type === "EXCEL_OPEN_PORT_REQUEST") {
             // handle this separately since we need to set server and serverPort
             const responseString = await openPort(deserialized.port, host);
+            server.setWebSocket(ws);
             response = { id: deserialized.id, response_type: "EXCEL_OPEN_PORT_RESPONSE", result: responseString };
           } else {
             response = await processRequestFromExcel(deserialized, storage, connections);
@@ -50,7 +51,7 @@ async function startWsServer(wsServerPort: number, host: string = "127.0.0.1") {
     });
 
     ws.on("close", () => {
-      console.log("Closed proxy server");
+      console.log("Disconnected from Add-in");
     });
   });
 
@@ -78,19 +79,6 @@ export async function openPort(port: number, host: string = "127.0.0.1"): Promis
 
 startWsServer(8080);
 
-// /**
-//  * Connects to a server at given port and hostname for communication.
-//  * @param port port number to connect to
-//  * @param host host name to connect to; default is localhost
-//  * @returns the string handle for the client that denotes the connection
-//  */
-// export async function connect(host: string = "localhost", port: number): Promise<string> {
-//   if (serverPort === null) {
-//     return "Must open port before connecting";
-//   }
-//   return (await _connect(host, port)).getHandle();
-// }
-
 // Global function; not an Excel function
 export async function _connect(host: string, localPort: number): Promise<ZendClient> {
   const createAndConnectClient = async () => {
@@ -115,26 +103,3 @@ export async function _connect(host: string, localPort: number): Promise<ZendCli
 export async function _syncStorage(client: ZendClient) {
   return client.syncStorage(storage);
 }
-
-// function sendData(data: object) {
-//   if (webSocket.readyState === WebSocket.OPEN) {
-//     const serializedReq = BSON.serialize(response);
-//             const sizeBuffer = Buffer.from(toBytesInt32(serializedRes.length));
-//             socket.write(sizeBuffer);
-//             const responseBuffer = Buffer.from(serializedRes);
-//             socket.write(Buffer.from(responseBuffer));
-//             console.log("Sent response: ", serializedRes);
-
-//     webSocket.send(JSON.stringify(data));
-//   } else {
-//     console.log("WebSocket not ready, cannot send data");
-//   }
-// }
-
-// function createWebSocket(port: number, host: string): void {
-//   webSocket = new WebSocket("${host}:${port}");
-//   webSocket.onopen = () => {
-//     console.log("Opened websocket connected to proxy");
-//   }
-
-// }

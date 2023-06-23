@@ -120,14 +120,14 @@ export type ExcelOpenPortResponse = {
 };
 
 export type ExcelUpdateMessage = {
-  response_type: "EXCEL_UPDATE_RESPONSE";
+  response_type: "EXCEL_UPDATE_MESSAGE";
   name: string;
   value: ZendType;
 };
 
 export type ExcelBulkUpdateMessage = {
-  response_type: "EXCEL_BULK_UPDATE_RESPONSE";
-  storage: ZendMap;
+  response_type: "EXCEL_BULK_UPDATE_MESSAGE";
+  storage_snapshot: ZendMap;
 };
 
 export type ZendExcelResponse = ExcelPutResponse | ExcelGetResponse | ExcelOpenPortResponse;

@@ -1,4 +1,5 @@
 ﻿import { deserialize, serialize } from "./zend/converters";
+import { InvocationMap } from "./zend/invocationmap";
 import {
   ExcelGetRequest,
   ExcelGetResponse,
@@ -45,17 +46,6 @@ ws.onmessage = (event) => {
     console.error(e);
   }
 };
-
-/**
- * Adds two numbers.
- * @customfunction ADD
- * @param first First number
- * @param second Second number
- * @returns The sum of the two numbers.
- */
-export function add(first: number, second: number): number {
-  return first + second;
-}
 
 /**
  * Displays the current time once a second.
@@ -118,21 +108,7 @@ export function logMessage(message: string): string {
  * @returns string respresenting success of putting the value.
  */
 export async function put(name: string, value: any[][]): Promise<string> {
-  let transformed: any = null;
-  if (value.length === 1) {
-    if (value[0].length === 1) {
-      transformed = value[0][0];
-    } else {
-      transformed = value[0];
-    }
-  } else {
-    if (value.every((row) => row.length == 1)) {
-      transformed = value.map((v) => v[0]);
-    } else {
-      transformed = value;
-    }
-  }
-
+  const transformed = transformFromExcel(value);
   const req: ExcelPutRequest = {
     id: getNextId(),
     request_type: "EXCEL_PUT_REQUEST",
@@ -161,27 +137,8 @@ export async function get(name: string, verticalLists?: boolean): Promise<any[][
   const value = deserialize(response.result);
 
   // Convert to any[][] for Excel
-  if (Array.isArray(value)) {
-    if (Array.isArray(value[0])) {
-      return value;
-    } else {
-      return verticalLists ? value.map((v) => [v]) : [value];
-    }
-  } else if (typeof value === "string" || typeof value === "number") {
-    return [[value]];
-  } else {
-    return [
-      [
-        {
-          type: Excel.CellValueType.entity,
-          text: name,
-          properties: {
-            ...value,
-          },
-        },
-      ],
-    ];
-  }
+  console.log(`here: ${value}`)
+  return transformToExcel(name, value, verticalLists);
 }
 
 /**
@@ -213,42 +170,46 @@ function getNextId(): number {
   return Math.floor(Math.random() * 10000);
 }
 
-/**
- * Opens a server port for incoming connections from other frameworks.
- * @customfunction OPEN_PORT
- * @param port port number to open server on and listen for connections
- * @param host host name for server; default is localhost
- * @returns string indicating success of opening port
- */
-// export async function port(port: number, host: string = "localhost"): Promise<string> {
-//   if (serverPort === null) {
-//     createWebSocket(port, host);
-//     serverPort = port;
-//     return "success";
-//   } else {
-//     return "Port already open on {serverPort}";
-//   }
-// }
+function transformFromExcel(value: any[][]): any {
+  let transformed: any = null;
+  if (value.length === 1) {
+    if (value[0].length === 1) {
+      transformed = value[0][0];
+    } else {
+      transformed = value[0];
+    }
+  } else {
+    if (value.every((row) => row.length == 1)) {
+      transformed = value.map((v) => v[0]);
+    } else {
+      transformed = value;
+    }
+  }
+  return transformed;
+}
 
-// function sendData(data: object) {
-//   if (webSocket.readyState === WebSocket.OPEN) {
-//     const serializedReq = BSON.serialize(response);
-//             const sizeBuffer = Buffer.from(toBytesInt32(serializedRes.length));
-//             socket.write(sizeBuffer);
-//             const responseBuffer = Buffer.from(serializedRes);
-//             socket.write(Buffer.from(responseBuffer));
-//             console.log("Sent response: ", serializedRes);
-
-//     webSocket.send(JSON.stringify(data));
-//   } else {
-//     console.log("WebSocket not ready, cannot send data");
-//   }
-// }
-
-// function createWebSocket(port: number, host: string): void {
-//   webSocket = new WebSocket("${host}:${port}");
-//   webSocket.onopen = () => {
-//     console.log("Opened websocket connected to proxy");
-//   }
-
-// }
+function transformToExcel(name: string, value: any, verticalLists: boolean): any[][] {
+  let transformed = null;
+  if (Array.isArray(value)) {
+    if (Array.isArray(value[0])) {
+      transformed = value;
+    } else {
+      transformed = verticalLists ? value.map((v) => [v]) : [value];
+    }
+  } else if (typeof value === "string" || typeof value === "number") {
+    transformed = [[value]];
+  } else {
+    transformed = [
+      [
+        {
+          type: Excel.CellValueType.entity,
+          text: name,
+          properties: {
+            ...value,
+          },
+        },
+      ],
+    ];
+  }
+  return transformed;
+}

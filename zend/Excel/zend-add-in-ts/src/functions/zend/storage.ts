@@ -18,14 +18,14 @@ export class Storage {
 
   putAll(dictToPut: Map<string, any>): void {
     dictToPut.forEach((value: any, key: string) => {
-      this.dict.set(key, serialize(value));
+      this.put(key, value);
     });
   }
 
   putAllSerialized(dictToPut: ZendMap): void {
     if (dictToPut === undefined || dictToPut === null) return;
     for (const [key, value] of Object.entries(dictToPut)) {
-      this.dict.set(key, value);
+      this.putSerialized(key, value);
     }
   }
 

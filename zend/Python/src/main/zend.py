@@ -208,7 +208,6 @@ class Server(object):
 
     def listenToClient(self, client, address):
         logger = logging.getLogger()
-        client.settimeout(5)  # Set a timeout for socket operations
         try:
             while True:
                 request_length = int.from_bytes(recvall(client, 4), byteorder='big')
@@ -223,6 +222,7 @@ class Server(object):
                 # response = response.rstrip() + '\n'
                 logger.debug(f"Sending response: {str(response)}")
                 bson_data = bson.encode(response)
+                logger.debug(len(bson_data))
                 client.sendall(len(bson_data).to_bytes(4, 'big'))
                 client.sendall(bson_data)
                 # client.send(response.encode())
