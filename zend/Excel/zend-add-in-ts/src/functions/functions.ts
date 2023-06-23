@@ -118,11 +118,26 @@ export function logMessage(message: string): string {
  * @returns string respresenting success of putting the value.
  */
 export async function put(name: string, value: any[][]): Promise<string> {
+  let transformed: any = null;
+  if (value.length === 1) {
+    if (value[0].length === 1) {
+      transformed = value[0][0];
+    } else {
+      transformed = value[0];
+    }
+  } else {
+    if (value.every((row) => row.length == 1)) {
+      transformed = value.map((v) => v[0]);
+    } else {
+      transformed = value;
+    }
+  }
+
   const req: ExcelPutRequest = {
     id: getNextId(),
     request_type: "EXCEL_PUT_REQUEST",
     name: name,
-    value: serialize(value),
+    value: serialize(transformed),
   };
   console.log(`Preparing put request: ${req}`);
   const response = (await sendWsRequest(req)) as ExcelPutResponse;
